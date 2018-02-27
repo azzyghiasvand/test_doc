@@ -1,6 +1,6 @@
 # User Documentation
 
-Welcome to the _User Documentation_ collection for the Cerebro software stack. The
+Welcome to the collection for the Cerebro software stack. The
 documents are grouped into sections that reflect their purpose.
 
 Table of Contents:
@@ -23,8 +23,7 @@ Table of Contents:
   * [LDAP Authentication][ldapauthn] - For integration of an LDAP service for authentication.
   * [OAuth Authentication][oauthguide] - For integration of an OAuth service for authentication.
   * [DeploymentManager REST Security][security] - Information on how to enable Kerberos for the DeploymentManager API.
-  * [Cluster Types][clustertypes] - Lists all of the supported cluster types and the
-  services they include.
+  * [Cluster Types][clustertypes] - Lists all of the supported cluster types and the services they include.
 
 ## Administration
 
@@ -49,8 +48,7 @@ Table of Contents:
 * [Catalog API][catapi] - Documents the Catalog REST API.
 * [Client Configuration][clientconfig] - Details about client configuration options.
 * [Supported Data Types][data] - Lists the supported data types.
-* [Extending CDAS][extendingcdas] - Introduces the concepts of UDFs and SerDes.
-Describes S3 permission inheritance.
+* [Extending CDAS][extendingcdas] - Introduces the concepts of UDFs and SerDes. Describes S3 permission inheritance.
 * [Supported SQL][supportedsql] - Describes the Cerebro supported SQL syntax.
 
 <!-- internal link references -->
