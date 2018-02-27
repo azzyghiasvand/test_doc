@@ -51,7 +51,7 @@ Table of Contents:
 * [Extending CDAS][extendingcdas] - Introduces the concepts of UDFs and SerDes. Describes S3 permission inheritance.
 * [Supported SQL][supportedsql] - Describes the Cerebro supported SQL syntax.
 
-[adinstall]: docs/AdvancedInstall.md
+##[adinstall]: docs/AdvancedInstall.md
 [auditing]: docs/Auditing.md
 [authn]: docs/Authentication.md
 [catapi]: docs/CatalogApi.md
@@ -75,4 +75,4 @@ Table of Contents:
 [security]: docs/Security.md
 [supportedsql]: docs/SupportedSQL.md
 [tableauwdc]: docs/TableauWDC.md
-[webui]: docs/WebUI.md
+[webui]: docs/WebUI.md##
