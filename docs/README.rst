@@ -51,28 +51,3 @@ Table of Contents:
 * [Extending CDAS][extendingcdas] - Introduces the concepts of UDFs and SerDes. Describes S3 permission inheritance.
 * [Supported SQL][supportedsql] - Describes the Cerebro supported SQL syntax.
 
-##[adinstall]: docs/AdvancedInstall.md
-[auditing]: docs/Auditing.md
-[authn]: docs/Authentication.md
-[catapi]: docs/CatalogApi.md
-[cdhintegration]: docs/CDHIntegration.md
-[clientconfig]: docs/ClientConfigurations.md
-[clientintegration]: docs/ClientIntegration.md
-[clusteradmin]: docs/ClusterAdmin.md
-[clusterlaunchpluginapi]: docs/ClusterLaunchPluginApi.md
-[clustertypes]: docs/ClusterTypes.md
-[data]: docs/Data.md
-[dbcli]: docs/DbCLI.md
-[dockerquickstart]: docs/DockerQuickstart.md
-[emrintegration]: docs/EMRIntegration.md
-[extendingcdas]: docs/ExtendingCDAS.md
-[install]: docs/Install.md
-[kerberosclustersetup]: docs/KerberosClusterSetup.md
-[kubernetesdashboardquickstart]: docs/KubernetesDashboardQuickStart.md
-[ldapauthn]: docs/LdapAuthentication.md
-[oauthguide]: docs/OAuthGuide.md
-[relnotes]: docs/ReleaseNotes.md
-[security]: docs/Security.md
-[supportedsql]: docs/SupportedSQL.md
-[tableauwdc]: docs/TableauWDC.md
-[webui]: docs/WebUI.md##
