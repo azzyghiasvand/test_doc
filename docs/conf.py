@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'Test_doc2'
+project = 'cerebro test doc'
 copyright = '2018, azzy'
 author = 'azzy'
 
@@ -28,6 +28,14 @@ version = ''
 # The full version, including alpha/beta/rc tags
 release = '.8'
 
+# FOR .md support
+from recommonmark.parser import CommonMarkParser
+
+source_parsers = {
+    '.md': CommonMarkParser,
+}
+
+source_suffix = ['.rst', '.md']
 
 # -- General configuration ---------------------------------------------------
 
@@ -68,35 +76,19 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-from recommonmark.parser import CommonMarkParser
-
-source_parsers = {
-    '.md': CommonMarkParser,
-}
-
-source_suffix = ['.rst', '.md']
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-import sphinx_rtd_theme
-html_theme = "sphinx_rtd_theme"
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-
-
+html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 # html_theme_options = {}
-html_theme_options = {
-    'typekit_id': 'hiw1hhg',
-    'logo_only': 'cerebro'
-    }
-       
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -113,13 +105,11 @@ html_static_path = ['_static']
 #
 # html_sidebars = {}
 
-def setup(app):
-    app.add_javascript("js/custom.js")
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Test_doc2doc'
+htmlhelp_basename = 'cerebrotestdocdoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -146,7 +136,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Test_doc2.tex', 'Test\\_doc2 Documentation',
+    (master_doc, 'cerebrotestdoc.tex', 'cerebro test doc Documentation',
      'azzy', 'manual'),
 ]
 
@@ -156,7 +146,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'test_doc2', 'Test_doc2 Documentation',
+    (master_doc, 'cerebrotestdoc', 'cerebro test doc Documentation',
      [author], 1)
 ]
 
@@ -167,7 +157,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Test_doc2', 'Test_doc2 Documentation',
-     author, 'Test_doc2', 'One line description of project.',
+    (master_doc, 'cerebrotestdoc', 'cerebro test doc Documentation',
+     author, 'cerebrotestdoc', 'One line description of project.',
      'Miscellaneous'),
 ]
