@@ -84,7 +84,7 @@ source_suffix = ['.rst', '.md']
 html_theme = 'classic'
 html_theme_options = {
     "rightsidebar": "true",
-    "relbarbgcolor": "black"
+    "relbarbgcolor": "red"
 }
 
 
