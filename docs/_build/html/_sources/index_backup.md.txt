@@ -9,27 +9,7 @@ Welcome to cerebro test doc's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-   Release information
-   installation
-   Administration
-   integration
-   Developers
-   Release Notes
-   Installation Guide
-   Advanced Installation option
-   Kereberos
-   LDAP Authentication
-   OAuth Authentication
-   DeploymentManager REST Security
-   Cluster types
-   Auditing
-   Cluster Administration
-   Cluster Launch APIs
-   Database CLI
 
-
-
-   ===========================================
    Table of Contents:
 
    * [Release Information](#release-information)
@@ -37,13 +17,15 @@ Welcome to cerebro test doc's documentation!
    * [Administration](#administration)
    * [Integration](#integration)
    * [Developers](#developers)
-   * [Release Notes](#rel-notes)
 
+   ## Release Information
+
+   * [Release Notes][relnotes] - Information about this release.
 
    ## Installation
 
-     * [Installation Guide](#install) - The main installation guide.
-     * [Advanced Installation Option](#adinstall) - Additional, advanced installation options.
+     * [Installation Guide][install] - The main installation guide.
+     * [Advanced Installation Option][adinstall] - Additional, advanced installation options.
      * [Kerberos][kerberosclustersetup] - Describes how to kerberize a Cerebro cluster.
      * [LDAP Authentication][ldapauthn] - For integration of an LDAP service for authentication.
      * [OAuth Authentication][oauthguide] - For integration of an OAuth service for authentication.
@@ -86,7 +68,6 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
 <!-- internal link references -->
 [adinstall]: docs/AdvancedInstall.md
 [auditing]: docs/Auditing.md
