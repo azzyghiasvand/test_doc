@@ -1,0 +1,167 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cluster Types &#8212; cerebro test doc .8 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cluster-types">
+<span id="cluster-types"></span><h1>Cluster Types<a class="headerlink" href="#cluster-types" title="Permalink to this headline">¶</a></h1>
+<p>When starting a Cerebro CDAS cluster, you can specify the type of the cluster as part
+of the <code class="docutils literal notranslate"><span class="pre">cerebro_cli</span> <span class="pre">clusters</span> <span class="pre">create</span></code> command, which is commonly used as such:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cerebro_cli clusters create --name<span class="o">=</span>&lt;Name&gt; --numNodes<span class="o">=</span>&lt;Number of nodes&gt; <span class="se">\</span>
+  --type<span class="o">=</span>&lt;Cluster type&gt; --environmentid<span class="o">=</span>&lt;ID from environments create&gt;
+</pre></div>
+</div>
+<p>For example:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>./cerebro_cli clusters create --name<span class="o">=</span>fintech_prod --numNodes<span class="o">=</span><span class="m">1</span> <span class="se">\</span>
+  --type<span class="o">=</span>STANDALONE_CLUSTER --environmentid<span class="o">=</span><span class="m">1</span>
+</pre></div>
+</div>
+<p>Each cluster type starts a specific set of services, which differ between the various
+types. While the purpose of each service is less of a concern (since they are managed
+by the Cerebro DeploymentManager and the Kubernetes Master), it is useful to understand
+which service may be in trouble when there are operational problems. For example, the
+following shows the output of the <code class="docutils literal notranslate"><span class="pre">cerebro_cli</span> <span class="pre">clusters</span> <span class="pre">list</span></code> command, with one
+cluster having an issue with health checking the third service of a standalone cluster:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>ec2-user@ip-10-1-10-201 cerebro<span class="o">]</span>$ ./cerebro_cli clusters list
+description      id  name               numNodes  numRunningServices    owner    statusCode    statusMessage                                                                                                                    <span class="nb">type</span>
+-------------  ----  ---------------  ----------  --------------------  -------  ------------  -------------------------------------------------------------------------------------------------------------------------------  ------------------
+                  <span class="m">1</span>  dev-env-0377              <span class="m">2</span>  <span class="m">7</span>/7                   admin    READY         All services running.                                                                                                            STANDALONE_CLUSTER
+                  <span class="m">3</span>  staging-env-4290          <span class="m">2</span>  <span class="m">2</span>/7                   admin    CONCERNING    Health check unsuccessful. Unable to reach <span class="m">10</span>.1.10.164:7182: java.net.ConnectException: Connection refused <span class="o">(</span>Connection refused<span class="o">)</span>  STANDALONE_CLUSTER
+</pre></div>
+</div>
+<p>The following lists the services started for each available cluster type, starting with
+the most common type, the <em>standalone</em> cluster. It contains everything needed to run a
+fully functional CDAS cluster.</p>
+<div class="section" id="standalone-cluster">
+<span id="standalone-cluster"></span><h2>Standalone Cluster<a class="headerlink" href="#standalone-cluster" title="Permalink to this headline">¶</a></h2>
+<p>Type: <code class="docutils literal notranslate"><span class="pre">STANDALONE_CLUSTER</span></code></p>
+<p>| No.   | Service     |
+| :—: | :———- |
+| 1     | Canary      |
+| 2     | ZooKeeper   |
+| 3     | Catalog     |
+| 4     | Planner     |
+| 5     | Worker      |
+| 6     | REST Server |
+| 7     | Web UI      |</p>
+<blockquote>
+<div><strong>Note:</strong> The number of services for a standalone cluster changed in 0.7.0. Before
+that version a cluster had eight (8) services. With 0.7.x there are only seven (7)
+services.</div></blockquote>
+<hr class="docutils" />
+<p>There are more specific cluster types, which are used less often though. These are
+needed when, for example, a single CDAS Catalog should be shared by multiple
+<em>data access</em> cluster instances.</p>
+</div>
+<div class="section" id="catalog-only-cluster">
+<span id="catalog-only-cluster"></span><h2>Catalog-Only Cluster<a class="headerlink" href="#catalog-only-cluster" title="Permalink to this headline">¶</a></h2>
+<p>Type: <code class="docutils literal notranslate"><span class="pre">CATALOG_CLUSTER</span></code></p>
+<p>| No.   | Service     |
+| :—: | :———- |
+| 1     | Canary      |
+| 2     | ZooKeeper   |
+| 3     | Catalog     |
+| 4     | Planner     |
+| 5     | REST Server |
+| 6     | Web UI      |</p>
+</div>
+<div class="section" id="data-access-only-cluster">
+<span id="data-access-only-cluster"></span><h2>Data-Access-Only Cluster<a class="headerlink" href="#data-access-only-cluster" title="Permalink to this headline">¶</a></h2>
+<p>Type: <code class="docutils literal notranslate"><span class="pre">DATA_ACCESS_CLUSTER</span></code></p>
+<p>| No.   | Service     |
+| :—: | :———- |
+| 1     | Canary      |
+| 2     | ZooKeeper   |
+| 3     | Planner     |
+| 4     | Worker      |</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Cluster Types</a><ul>
+<li><a class="reference internal" href="#standalone-cluster">Standalone Cluster</a></li>
+<li><a class="reference internal" href="#catalog-only-cluster">Catalog-Only Cluster</a></li>
+<li><a class="reference internal" href="#data-access-only-cluster">Data-Access-Only Cluster</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ClusterTypes.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, azzy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/ClusterTypes.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
