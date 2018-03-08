@@ -9,7 +9,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
-set SPHINXPROJ=cerebrotestdoc
+set SPHINXPROJ=cerebrodatapre-release
 
 if "%1" == "" goto help
 

@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = cerebrotestdoc
+SPHINXPROJ    = cerebrodatapre-release
 SOURCEDIR     = .
 BUILDDIR      = _build
 
