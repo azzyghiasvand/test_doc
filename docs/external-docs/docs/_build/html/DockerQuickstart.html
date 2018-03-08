@@ -1,0 +1,200 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Docker Quickstart &#8212; cerebro test doc .8 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="docker-quickstart">
+<span id="docker-quickstart"></span><h1>Docker Quickstart<a class="headerlink" href="#docker-quickstart" title="Permalink to this headline">¶</a></h1>
+<p>This document describes how to run Cerebro Data Access Service (CDAS) in quickstart
+mode using Docker. This will start CDAS in single-node mode which can for example, be
+run on a development machine. The purpose is to experiment with the CDAS APIs and explore
+the CDAS capabilities.</p>
+<div class="section" id="prerequisites">
+<span id="prerequisites"></span><h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Docker version 1.11+</li>
+<li>If using Docker Machine, it needs to be running.</li>
+</ul>
+</div>
+<div class="section" id="download">
+<span id="download"></span><h2>Download<a class="headerlink" href="#download" title="Permalink to this headline">¶</a></h2>
+<p>Download the cerebro-quickstart.sh script:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl -O https://s3.amazonaws.com/cerebrodata-release-useast/quickstart/cerebro-quickstart.sh <span class="o">&amp;&amp;</span> chmod +x cerebro-quickstart.sh
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-stopping-the-quickstart-container">
+<span id="starting-stopping-the-quickstart-container"></span><h2>Starting/stopping the quickstart container<a class="headerlink" href="#starting-stopping-the-quickstart-container" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ cerebro-quickstart.sh start
+</pre></div>
+</div>
+<p>This should take a few seconds to start the container (Note: This requires for all Docker
+images to be local, otherwise the images will be downloaded on first start, requiring
+more time). This will launch all of the CDAS services and expose them on their default
+ports.</p>
+<p>To stop the container:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ cerebro-quickstart.sh stop
+</pre></div>
+</div>
+<p>Only one instance of this container can be running at a time, you will need to stop the
+container before trying again.</p>
+</div>
+<div class="section" id="sample-data">
+<span id="sample-data"></span><h2>Sample Data<a class="headerlink" href="#sample-data" title="Permalink to this headline">¶</a></h2>
+<p>The quickstart CDAS will come with a few sample datasets that will already be set up.
+The quickstart set up will create the <code class="docutils literal notranslate"><span class="pre">cerebro_sample</span></code> database with a few tables in
+it. You should be able to read them through the various CDAS APIs. For example, using
+the REST API, you can do:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl localhost:11050/scan/cerebro_sample.sample
+<span class="o">[</span>
+    <span class="o">{</span>
+        <span class="s2">&quot;record&quot;</span>: <span class="s2">&quot;This is a sample test file.&quot;</span>
+    <span class="o">}</span>,
+    <span class="o">{</span>
+        <span class="s2">&quot;record&quot;</span>: <span class="s2">&quot;It should consist of two lines.&quot;</span>
+    <span class="o">}</span>
+<span class="o">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="testing-with-local-data">
+<span id="testing-with-local-data"></span><h2>Testing with local data<a class="headerlink" href="#testing-with-local-data" title="Permalink to this headline">¶</a></h2>
+<p>The quickstart container can be started to share with data from the host file system.
+Currently, it is only supported to share a single directory from the host. This can be
+specified when starting up the quickstart image.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ cerebro-quickstart.sh start -mount &lt;Absolute path on host file system&gt;
+</pre></div>
+</div>
+<p>This directory will be available <em>inside</em> the container under <code class="docutils literal notranslate"><span class="pre">/data</span></code>. This directory
+is <em>shared</em> (and not copied) meaning changes on the host will be instantly reflected
+inside the container.</p>
+<p>For example, if we had two datasets (dataset1, dataset2) on the local file system in
+<code class="docutils literal notranslate"><span class="pre">/tmp/datasets</span></code>, we could make those accessible to the quickstart container like so:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ ls /tmp/datasets
+dataset1/  dataset2/
+$ cerebro-quickstart.sh start -mount /tmp/datasets
+<span class="c1"># Datasets are accessible within container under /data. For example, these DDL</span>
+<span class="c1"># commands will create the metadata over the datasets.</span>
+<span class="c1"># CREATE EXTERNAL TABLE dataset1(...) LOCATION &#39;file:///data/dataset1&#39;</span>
+<span class="c1"># CREATE EXTERNAL TABLE dataset2(...) LOCATION &#39;file:///data/dataset2&#39;</span>
+</pre></div>
+</div>
+<p>Note: There are performance issues with sharing the file system on Mac OS X so this is
+not suitable for testing large amounts of data. See the Docker site for more details: https://docs.docker.com/docker-for-mac/osxfs/#/performance-issues-solutions-and-roadmap</p>
+</div>
+<div class="section" id="ports">
+<span id="ports"></span><h2>Ports<a class="headerlink" href="#ports" title="Permalink to this headline">¶</a></h2>
+<p>The container will use these ports on the Docker host. They can be configured by setting
+the corresponding environment variable (e.g. export CDAS_WEB_PORT=1234).</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">CDAS_WEB_PORT</span></code>: WebUI/REST Api port. Defaults to 11050.</li>
+<li><code class="docutils literal notranslate"><span class="pre">CDAS_PLANNER_PORT</span></code>: Planner RPC port. Defaults to 12050.</li>
+<li><code class="docutils literal notranslate"><span class="pre">CDAS_WORKER_PORT</span></code>: Worker RPC port. Defaults to 13040.</li>
+<li><code class="docutils literal notranslate"><span class="pre">HMS_PORT</span></code>: Catalog Hive Metastore Client port. Defaults to 9083.</li>
+<li><code class="docutils literal notranslate"><span class="pre">SENTRY_PORT</span></code>: Catalog Sentry Client port. Defaults to 30911.</li>
+</ul>
+</div>
+<div class="section" id="troubleshooting">
+<span id="troubleshooting"></span><h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
+<p><strong><em>Cannot connect to the Docker daemon. Is the Docker daemon running on this host?</em></strong></p>
+<p>Make sure Docker is running. If you have not set up sudo-less Docker, you will need
+to run this script as root.</p>
+<p><strong><em>Error getting IP address: Host is not running</em></strong></p>
+<p>Make sure the Docker machine VM is running.</p>
+<p><strong><em>Docker: Error response from daemon: Conflict.</em></strong></p>
+<p>The container is already running. First run <code class="docutils literal notranslate"><span class="pre">cerebro-quickstart.sh</span> <span class="pre">stop</span></code>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Docker Quickstart</a><ul>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li><a class="reference internal" href="#download">Download</a></li>
+<li><a class="reference internal" href="#starting-stopping-the-quickstart-container">Starting/stopping the quickstart container</a></li>
+<li><a class="reference internal" href="#sample-data">Sample Data</a></li>
+<li><a class="reference internal" href="#testing-with-local-data">Testing with local data</a></li>
+<li><a class="reference internal" href="#ports">Ports</a></li>
+<li><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/DockerQuickstart.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, azzy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/DockerQuickstart.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
