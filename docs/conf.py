@@ -93,6 +93,8 @@ html_theme = 'alabaster'
 #
 # html_theme_options = {}
 html_theme_options = {
+    'logo': 'logo_cerebro.png'
+    
     
     }
 
