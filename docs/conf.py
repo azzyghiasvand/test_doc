@@ -12,26 +12,21 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-#import sys, os
-#sys.path.(os.path.abspath('.'))
-import os
-on_rtd = os.environ.get('READTHEDOCS') == 'True'
-if on_rtd:
-    html_theme = 'default'
-else:
-    html_theme = 'classic'
+# import os
+# import sys
+# sys.path.insert(0, os.path.abspath('.'))
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'cerebro data pre-release'
+project = 'Cerebro Data'
 copyright = '2018, azzy'
 author = 'azzy'
 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = ''
+release = '1.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -44,31 +39,16 @@ release = ''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.coverage',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
 ]
 
-#def setup(app):
- #   app.add_stylesheet('css/custom.css')
-    
-from recommonmark.parser import CommonMarkParser
-
-source_parsers = {
-    '.md': CommonMarkParser,
-}
-
-source_suffix = ['.rst', '.md']
-
 # Add any paths that contain templates here, relative to this directory.
-#templates_path = ['_templates']
+templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.md'
+source_suffix = '.rst'
 
 # The master toctree document.
 master_doc = 'index'
@@ -94,26 +74,13 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-# import alabaster
-# html_theme_path = [alabaster.get_path()]
-# extensions = ['alabaster']
-
-
-
+html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-# 'logo': 'logo_cerebro.png',
-# 'description': 'Cerebro Data Documentation',
+#
 # html_theme_options = {}
-html_theme_options = {
-    "rightsidebar": "false",
-    "relbarbgcolor": "black",
-    'sidebarlinkcolor': '#ff0000',
-  
-    
-    }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -134,7 +101,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'cerebrodatapre-releasedoc'
+htmlhelp_basename = 'CerebroDatadoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -161,7 +128,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'cerebrodatapre-release.tex', 'cerebro data pre-release Documentation',
+    (master_doc, 'CerebroData.tex', 'Cerebro Data Documentation',
      'azzy', 'manual'),
 ]
 
@@ -171,7 +138,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'cerebrodatapre-release', 'cerebro data pre-release Documentation',
+    (master_doc, 'cerebrodata', 'Cerebro Data Documentation',
      [author], 1)
 ]
 
@@ -182,8 +149,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'cerebrodatapre-release', 'cerebro data pre-release Documentation',
-     author, 'cerebrodatapre-release', 'One line description of project.',
+    (master_doc, 'CerebroData', 'Cerebro Data Documentation',
+     author, 'CerebroData', 'One line description of project.',
      'Miscellaneous'),
 ]
 
@@ -207,6 +174,3 @@ epub_copyright = copyright
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
-
-
-# -- Extension configuration -------------------------------------------------
