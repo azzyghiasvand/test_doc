@@ -96,7 +96,7 @@ html_theme = 'classic'
 # 'description': 'Cerebro Data Documentation',
 # html_theme_options = {}
 html_theme_options = {
-    "rightsidebar": "true",
+    "rightsidebar": "false",
     "relbarbgcolor": "black",
     'sidebarlinkcolor': '#ff0000',
   
