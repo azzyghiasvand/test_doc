@@ -14,6 +14,12 @@
 #
 #import sys, os
 #sys.path.(os.path.abspath('.'))
+import os
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+if on_rtd:
+    html_theme = 'classic'
+else:
+    html_theme = 'default'
 
 
 # -- Project information -----------------------------------------------------
@@ -43,6 +49,10 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
 ]
+
+def setup(app):
+    app.add_stylesheet('css/custom.css')
+    
 from recommonmark.parser import CommonMarkParser
 
 source_parsers = {
@@ -88,12 +98,7 @@ pygments_style = 'sphinx'
 # html_theme_path = [alabaster.get_path()]
 # extensions = ['alabaster']
 
-import os
-on_rtd = os.environ.get('READTHEDOCS') == 'True'
-if on_rtd:
-    html_theme = 'classic'
-else:
-    html_theme = 'default'
+
 
 
 # Theme options are theme-specific and customize the look and feel of a theme
