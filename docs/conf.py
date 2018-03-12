@@ -17,9 +17,9 @@
 import os
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 if on_rtd:
-    html_theme = 'classic'
-else:
     html_theme = 'default'
+else:
+    html_theme = 'classic'
 
 
 # -- Project information -----------------------------------------------------
@@ -50,8 +50,8 @@ extensions = [
     'sphinx.ext.githubpages',
 ]
 
-def setup(app):
-    app.add_stylesheet('css/custom.css')
+#def setup(app):
+ #   app.add_stylesheet('css/custom.css')
     
 from recommonmark.parser import CommonMarkParser
 
