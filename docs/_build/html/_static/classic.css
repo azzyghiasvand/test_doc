@@ -36,9 +36,12 @@ div.bodywrapper {
 }
 
 div.body {
-    background-color: #ff0000;
+    background-color: #ffffff;
     color: #000000;
     padding: 0 20px 30px 20px;
+}
+div.bodywrapper {
+    margin: 0 230px 0 0;
 }
 
 div.footer {
@@ -55,7 +58,7 @@ div.footer a {
 }
 
 div.related {
-    background-color: #133f52;
+    background-color: black;
     line-height: 30px;
     color: #ffffff;
 }
@@ -65,6 +68,7 @@ div.related a {
 }
 
 div.sphinxsidebar {
+    float: right;
 }
 
 div.sphinxsidebar h3 {
@@ -104,11 +108,11 @@ div.sphinxsidebar ul {
 }
 
 div.sphinxsidebar a {
-    color: #98dbcc;
+    color: #ff0000;
 }
 
 div.sphinxsidebar input {
-    border: 1px solid #98dbcc;
+    border: 1px solid #ff0000;
     font-family: sans-serif;
     font-size: 1em;
 }

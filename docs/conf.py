@@ -12,9 +12,8 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.(0, os.path.abspath('.'))
+#import sys, os
+#sys.path.(os.path.abspath('.'))
 
 
 # -- Project information -----------------------------------------------------
@@ -88,7 +87,7 @@ pygments_style = 'sphinx'
 # import alabaster
 # html_theme_path = [alabaster.get_path()]
 # extensions = ['alabaster']
-# html_theme = 'alabaster'
+html_theme = 'classic'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -97,10 +96,9 @@ pygments_style = 'sphinx'
 # 'description': 'Cerebro Data Documentation',
 # html_theme_options = {}
 html_theme_options = {
-  # 'bgcolor': '#ff0000'
-
-  'logo_name': 'true',
-  'sidebar_search_button': '#ff0000',
+    "rightsidebar": "true",
+    "relbarbgcolor": "black",
+    'sidebarlinkcolor': '#ff0000',
   
     
     }
@@ -119,15 +117,7 @@ html_static_path = ['_static']
 # 'searchbox.html']``.
 #
 # html_sidebars = {}
-html_sidebars = {
-   '**': [
-       'about.html',
-       'navigation.html',
-       'relations.html',
-       'searchbox.html',
-        'donate.html',
-    ]
-}
+
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
