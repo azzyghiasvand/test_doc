@@ -93,7 +93,9 @@ html_theme = 'alabaster'
 #
 # html_theme_options = {}
 html_theme_options = {
-    'logo': 'logo_cerebro.png'
+    'logo': 'logo_cerebro.png',
+    'description': 'Cerebro Data Documentation',
+    'sidebar_header': '#FF0000'
     
     
     }
