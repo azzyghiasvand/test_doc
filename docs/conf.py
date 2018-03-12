@@ -87,7 +87,14 @@ pygments_style = 'sphinx'
 # import alabaster
 # html_theme_path = [alabaster.get_path()]
 # extensions = ['alabaster']
-html_theme = 'classic'
+
+import os
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+if on_rtd:
+    html_theme = 'classic'
+else:
+    html_theme = 'default'
+
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
