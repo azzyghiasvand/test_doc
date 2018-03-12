@@ -98,13 +98,7 @@ html_theme = 'alabaster'
 # html_theme_options = {}
 html_theme_options = {
 
-    '**': [
-        'about.html',
-        'navigation.html',
-        'relations.html',
-        'searchbox.html',
-        'donate.html',
-    ]
+   'logo': 'docs/_static/logo_cerebro.png',
     
     }
 
