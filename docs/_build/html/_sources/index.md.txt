@@ -1,26 +1,4 @@
 
-.. include: global.rst
-
-
-Contents:
-
-.. toctree::
-   :maxdepth: 2
-
-   release information
-   installation
-   administration
-   integration
-
-.. only:: html
-
-******************
-Indices and Tables
-******************
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
 # User Documentation
 
@@ -44,9 +22,6 @@ documents are grouped into sections that reflect their purpose.
    * [Integration](#integration)
    * [Developers](#developers)
    * [Release Notes](#rel-notes)
-
-
-
 
 
    ## Installation
