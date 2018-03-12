@@ -98,11 +98,10 @@ html_theme = 'alabaster'
 # html_theme_options = {}
 html_theme_options = {
   # 'bgcolor': '#ff0000'
-'logo_only': 'true',
-  'html_logo': 'docs/_build/html/_static/logo_cerebro.png',
+
   'logo_name': 'true',
   'sidebar_search_button': '#ff0000',
-  'border_top': '#ff0000',
+  
     
     }
 
