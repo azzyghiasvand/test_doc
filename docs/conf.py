@@ -88,7 +88,7 @@ pygments_style = 'sphinx'
 # import alabaster
 # html_theme_path = [alabaster.get_path()]
 # extensions = ['alabaster']
-html_theme = 'classic'
+html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -97,9 +97,9 @@ html_theme = 'classic'
 # 'description': 'Cerebro Data Documentation',
 # html_theme_options = {}
 html_theme_options = {
-   'bgcolor': '#ff0000'
-  # 'logo': 'docs/_static/logo_cerebro.png',
- #  'logo_name': 'true',
+  # 'bgcolor': '#ff0000'
+  'logo': 'docs/_static/logo_cerebro.png',
+  'logo_name': 'true',
     
     }
 
@@ -117,15 +117,15 @@ html_static_path = ['_static']
 # 'searchbox.html']``.
 #
 # html_sidebars = {}
-# html_sidebars = {
- #   '**': [
- #       'about.html',
- #       'navigation.html',
- #       'relations.html',
- #       'searchbox.html',
- #       'donate.html',
-    #]
-#}
+html_sidebars = {
+   '**': [
+       'about.html',
+       'navigation.html',
+       'relations.html',
+       'searchbox.html',
+        'donate.html',
+    ]
+}
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
