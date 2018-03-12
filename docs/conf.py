@@ -98,6 +98,7 @@ html_theme = 'alabaster'
 # html_theme_options = {}
 html_theme_options = {
     
+    'logo_mame': 'true',
     'logo': 'logo_cerebro.png',
     'github_user': 'bitprophet',
     'github_repo': 'alabaster',
