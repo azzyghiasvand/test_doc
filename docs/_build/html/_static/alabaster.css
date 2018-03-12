@@ -160,7 +160,7 @@ div.sphinxsidebarwrapper p.blurb {
 div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
     font-family: 'Garamond', 'Georgia', serif;
-    color: #FF0000;
+    color: #444;
     font-size: 24px;
     font-weight: normal;
     margin: 0 0 5px 0;
@@ -221,7 +221,7 @@ div.sphinxsidebar hr {
 /* -- body styles ----------------------------------------------------------- */
 
 a {
-    color: #FF0000;
+    color: #004B6B;
     text-decoration: underline;
 }
 

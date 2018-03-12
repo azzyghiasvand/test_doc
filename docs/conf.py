@@ -97,12 +97,14 @@ html_theme = 'alabaster'
 # 'description': 'Cerebro Data Documentation',
 # html_theme_options = {}
 html_theme_options = {
-    
-    'logo_mame': 'true',
-    'logo': 'logo_cerebro.png',
-    'github_user': 'bitprophet',
-    'github_repo': 'alabaster',
-    'sidebar_header': '#FF0000'
+
+    '**': [
+        'about.html',
+        'navigation.html',
+        'relations.html',
+        'searchbox.html',
+        'donate.html',
+    ]
     
     }
 
