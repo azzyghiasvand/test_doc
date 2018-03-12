@@ -100,6 +100,7 @@ html_theme_options = {
   # 'bgcolor': '#ff0000'
   'logo': 'docs/_static/logo_cerebro.png',
   'logo_name': 'true',
+  'sidebar_search_button': '#ff0000',
     
     }
 
