@@ -16,7 +16,7 @@
 body {
     font-family: sans-serif;
     font-size: 100%;
-    background-color: #a52a2a;
+    background-color: #11303d;
     color: #000;
     margin: 0;
     padding: 0;
@@ -36,7 +36,7 @@ div.bodywrapper {
 }
 
 div.body {
-    background-color: #ffffff;
+    background-color: #ff0000;
     color: #000000;
     padding: 0 20px 30px 20px;
 }
@@ -55,7 +55,7 @@ div.footer a {
 }
 
 div.related {
-    background-color: #b28989;
+    background-color: #133f52;
     line-height: 30px;
     color: #ffffff;
 }
@@ -65,24 +65,7 @@ div.related a {
 }
 
 div.sphinxsidebar {
-    top: 30px;
-    bottom: 0;
-    margin: 0;
-    position: fixed;
-    overflow: auto;
-    height: auto;
 }
-/* this is nice, but it it leads to hidden headings when jumping
-   to an anchor */
-/*
-div.related {
-    position: fixed;
-}
-
-div.documentwrapper {
-    margin-top: 30px;
-}
-*/
 
 div.sphinxsidebar h3 {
     font-family: 'Trebuchet MS', sans-serif;
@@ -148,21 +131,6 @@ a:hover {
     text-decoration: underline;
 }
 
-
-a.external {
-   text-decoration: none;
-   border-bottom: 1px dashed #355f7c;
-}
-
-a.external:hover {
-   text-decoration: none;
-   border-bottom: none;
-}
-
-a.external:visited {
-    text-decoration: none;
-    border-bottom: 1px dashed #355f7c;
-}
 
 
 /* -- body styles ----------------------------------------------------------- */
