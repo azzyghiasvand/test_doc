@@ -160,7 +160,7 @@ div.sphinxsidebarwrapper p.blurb {
 div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
     font-family: 'Garamond', 'Georgia', serif;
-    color: #444;
+    color: ;
     font-size: 24px;
     font-weight: normal;
     margin: 0 0 5px 0;
@@ -423,7 +423,7 @@ table.footnote {
 
 table.footnote + table.footnote {
     margin-top: -15px;
-    border-top: none;
+    border-top: solid 10px #FF0000;
 }
 
 table.field-list th {
