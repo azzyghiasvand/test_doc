@@ -14,7 +14,7 @@
 #
 # import os
 # import sys
-# sys.path.insert(0, os.path.abspath('.'))
+# sys.path.(0, os.path.abspath('.'))
 
 
 # -- Project information -----------------------------------------------------
@@ -88,7 +88,7 @@ pygments_style = 'sphinx'
 # import alabaster
 # html_theme_path = [alabaster.get_path()]
 # extensions = ['alabaster']
-html_theme = 'alabaster'
+# html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
