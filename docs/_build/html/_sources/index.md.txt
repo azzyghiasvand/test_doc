@@ -1,28 +1,34 @@
 
+============================================
 
-# User Documentation
+.. toctree::
 
-Welcome to the _User Documentation_ collection for the Cerebro software stack. The
-documents are grouped into sections that reflect their purpose.
+    ReleaseNotes
+    installation
+    AdvancedInstall   
+    
 
- # Table of Contents:
+    Indices and tables
+    =================
+
+    * :ref: 'genindex'
+    * :ref: 'modindex'
+
+
+   ===========================================
+   # Table of Contents:
 
    * [Release Information](#release-information)
-       * [Release Notes](*relnotes) - Information about this release.
    * [Installation](#installation)
-       * [Installation Guide](#install) - The main installation guide.
-       * [adinstall](#AdvancedInstall)
-       * [Advanced Installation Option](#adinstall) - Additional, advanced installation options.
-       * [Kerberos](#kerberosclustersetup) - Describes how to kerberize a Cerebro cluster.
-       * [LDAP Authentication](#ldapauthn) - For integration of an LDAP service for authentication.
-       * [OAuth Authentication](#oauthguide) - For integration of an OAuth service for authentication.
-       * [DeploymentManager REST Security](#security) - Information on how to enable Kerberos for the DeploymentManager API.
-       * [Cluster Types](#clustertypes) - Lists all of the supported cluster types and the services they include.
    * [Administration](#administration)
    * [Integration](#integration)
    * [Developers](#developers)
    * [Release Notes](#rel-notes)
 
+
+   ## Release Information
+
+   * [Release Notes](*relnotes) - Information about this release.
 
    ## Installation
 
@@ -31,7 +37,14 @@ documents are grouped into sections that reflect their purpose.
 
 
 
-   * [
+   * [Installation Guide](#install) - The main installation guide.
+   * [adinstall](#AdvancedInstall)
+   * [Advanced Installation Option](#adinstall) - Additional, advanced installation options.
+   * [Kerberos](#kerberosclustersetup) - Describes how to kerberize a Cerebro cluster.
+   * [LDAP Authentication](#ldapauthn) - For integration of an LDAP service for authentication.
+   * [OAuth Authentication](#oauthguide) - For integration of an OAuth service for authentication.
+   * [DeploymentManager REST Security](#security) - Information on how to enable Kerberos for the DeploymentManager API.
+   * [Cluster Types](#clustertypes) - Lists all of the supported cluster types and the services they include.
 
   ## Administration
 

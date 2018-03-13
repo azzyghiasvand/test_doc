@@ -11,6 +11,22 @@ Welcome to Cerebro Data's documentation!
    :caption: Contents:
 
 
+   readme.md
+   ReleaseNotes.md
+   installation
+   AdvancedInstall
+   auditing
+   authentication
+   CDHIntegration
+   CatalogApi
+   ClientConfigurations
+   ClientIntegration
+   ClusterAdmin
+   clusterlaunchpluginapi
+   ClusterTypes
+
+
+
 
 Indices and tables
 ==================

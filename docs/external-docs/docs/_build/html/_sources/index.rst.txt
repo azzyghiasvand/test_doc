@@ -9,9 +9,10 @@ Welcome to cerebro test doc's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-      install
-      test
-      test2
+      intro
+      strings
+      datatypes
+      numeric
 
 
 
