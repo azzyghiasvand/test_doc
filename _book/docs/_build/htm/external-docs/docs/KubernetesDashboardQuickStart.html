@@ -1,0 +1,151 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Kubernetes Dashboard Quickstart &#8212; cerebro data pre-release  documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="kubernetes-dashboard-quickstart">
+<span id="kubernetes-dashboard-quickstart"></span><h1>Kubernetes Dashboard Quickstart<a class="headerlink" href="#kubernetes-dashboard-quickstart" title="Permalink to this headline">¶</a></h1>
+<p>This document describes how to use the Kubernetes Administration Dashboard. Kubernetes
+Dashboard enables the cluster administrator to get overall health of the cluster and
+get details of each node, pod and service that is part of the cluster.</p>
+<div class="section" id="version">
+<span id="version"></span><h2>Version<a class="headerlink" href="#version" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Current version of Kubernetes is 1.5.3</li>
+<li>The admin dashboard version is 1.5.1</li>
+</ul>
+</div>
+<div class="section" id="dashboard-web">
+<span id="dashboard-web"></span><h2>Dashboard Web<a class="headerlink" href="#dashboard-web" title="Permalink to this headline">¶</a></h2>
+<p>The dashboard web interface is accessible through the same port on the IP address of
+any of the cluster nodes. To get the hostport, first get the cluster id, by running get
+clusters command, followed by get details for the cluster.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ cerebro_cli agent &lt;masterip&gt; kubernetes-info
+Example:
+$ cerebro_cli agent <span class="m">10</span>.1.10.101 kubernetes-info
+</pre></div>
+</div>
+<p>Note down the dashboardPort value. Using your favorite browser launch the dashboard with
+URL similar to the following example.</p>
+<p>Example:  http://10.1.10.101:31779</p>
+</div>
+<div class="section" id="basic-navigation">
+<span id="basic-navigation"></span><h2>Basic navigation<a class="headerlink" href="#basic-navigation" title="Permalink to this headline">¶</a></h2>
+<p>The navigation panel on the left connects to the <code class="docutils literal notranslate"><span class="pre">default</span></code> namespace. CDAS services are
+launched in this namespace. <code class="docutils literal notranslate"><span class="pre">kube-system</span></code> namespace will show the Kubernetes system pods
+and services.</p>
+<p>Kubernetes deploys and schedules containers in groups called pods. A pod typically has
+one or more containers that provides a CDAS service.</p>
+<p>You may use the dashboard ui to list the various CDAS services and confirm that the
+desired number of pods is running for each service. Typically, you would run one
+<code class="docutils literal notranslate"><span class="pre">cerebro-planner</span></code> pod and several <code class="docutils literal notranslate"><span class="pre">cerebro-worker</span></code> pods depending on your workload needs.</p>
+<p>For example, a 10-node CDAS cluster would have the following pods:</p>
+<ul class="simple">
+<li>1 canary pod</li>
+<li>1 cerebro-catatog pod</li>
+<li>1 cdas-rest-server pod</li>
+<li>1 zookeeper pod</li>
+<li>1 cerebro-planner pod</li>
+<li>9 cerebro-worker pods</li>
+</ul>
+<p>Let’s try a few of sample dashboard operations:</p>
+<ol class="simple">
+<li>Keeping the namespace as <code class="docutils literal notranslate"><span class="pre">default</span></code>, click on <code class="docutils literal notranslate"><span class="pre">Deployments</span></code> on the left navigation
+panel. Makes sure that all CDAS services are running. This should include
+<code class="docutils literal notranslate"><span class="pre">cerebro-catalog</span></code>, <code class="docutils literal notranslate"><span class="pre">cerebro-web</span></code>, and <code class="docutils literal notranslate"><span class="pre">cerebro-planner</span></code>.</li>
+<li>Click on <code class="docutils literal notranslate"><span class="pre">Pods</span></code> on the left navigation panel Make sure that the list is similar to
+the example above, including the desired number of pods.</li>
+<li>Click on <code class="docutils literal notranslate"><span class="pre">Pods</span></code>. Scroll to the right of the <code class="docutils literal notranslate"><span class="pre">cerebro-planner</span></code> pod and click on the
+icon with small horizontal bars. This will show the logs in a separate tab/window on
+your browser. The logs are a quick way to detect any issues with the pod.</li>
+</ol>
+</div>
+<div class="section" id="additional-information">
+<span id="additional-information"></span><h2>Additional Information<a class="headerlink" href="#additional-information" title="Permalink to this headline">¶</a></h2>
+<p>Refer to https://kubernetes.io/docs/ for documentation and tutorials on Kubernetes.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Kubernetes Dashboard Quickstart</a><ul>
+<li><a class="reference internal" href="#version">Version</a></li>
+<li><a class="reference internal" href="#dashboard-web">Dashboard Web</a></li>
+<li><a class="reference internal" href="#basic-navigation">Basic navigation</a></li>
+<li><a class="reference internal" href="#additional-information">Additional Information</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/external-docs/docs/KubernetesDashboardQuickStart.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, azzy.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+    </div>
+  </body>
+</html>

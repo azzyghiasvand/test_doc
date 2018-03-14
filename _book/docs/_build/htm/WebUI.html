@@ -1,0 +1,278 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cerebro Web UI &#8212; cerebro data pre-release  documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cerebro-web-ui">
+<span id="cerebro-web-ui"></span><h1>Cerebro Web UI<a class="headerlink" href="#cerebro-web-ui" title="Permalink to this headline">¶</a></h1>
+<p>The Cerebro Web UI provides a user interface to: view your account information, browse the
+datasets available to you in Cerebro, and inspect group permissions on any dataset for which
+you have all privileges.</p>
+<div class="section" id="get-started">
+<span id="get-started"></span><h2>Get started<a class="headerlink" href="#get-started" title="Permalink to this headline">¶</a></h2>
+<p>To access the Web UI, first set up a Cerebro cluster. Once the cluster is set up,
+determine the endpoints that have been created, for example by running
+<code class="docutils literal notranslate"><span class="pre">cerebro_cli</span> <span class="pre">clusters</span> <span class="pre">endpoints</span> <span class="pre">&lt;cluster_id&gt;</span></code>. Find the host and port of the component
+named <code class="docutils literal notranslate"><span class="pre">cerebro_web:webui</span></code> and access <code class="docutils literal notranslate"><span class="pre">http://&lt;host&gt;:&lt;port&gt;</span></code> (or <code class="docutils literal notranslate"><span class="pre">https://&lt;host&gt;:&lt;port&gt;</span></code>
+if using SSL) in a web browser.</p>
+<p>You will see a login screen that can be configured to provide various login options
+depending on your cluster configuration, including:</p>
+<ul class="simple">
+<li><strong>Cerebro token login</strong>: this option is always available for log in as long as the user
+can get a Cerebro token.</li>
+<li><strong>username/password login</strong>: if the cluster is configured to authenticate with LDAP,
+username and password login is available</li>
+<li><strong>OAuth login</strong>: OAuth login is available if the cluster is configured for it
+and there is an auth server set up to handle it.</li>
+</ul>
+<p>Enter the necessary credentials to log in to the WebUI.</p>
+</div>
+<div class="section" id="features">
+<span id="features"></span><h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<p>In general, the Web UI provides read-only browsing of your Cerebro environment, including:
+search and filtering of available datasets, dataset metadata views (including schema info),
+information about access to datasets and fields, dataset previews, basic usage information
+for getting connecting to datasets from analytics environments, and information about the
+logged-in user’s account and credentials.</p>
+<div class="section" id="home-page">
+<span id="home-page"></span><h3>Home Page<a class="headerlink" href="#home-page" title="Permalink to this headline">¶</a></h3>
+<p>After you login, you will land on the Home Page. From this page, you can see</p>
+<ul class="simple">
+<li>Account information, including<ul>
+<li>Your Cerebro username</li>
+<li>The groups you belong to</li>
+<li>The roles you have been granted, and the groups granting you those roles</li>
+<li>Your access token, including when it will expire</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="datasets-page">
+<span id="datasets-page"></span><h3>Datasets Page<a class="headerlink" href="#datasets-page" title="Permalink to this headline">¶</a></h3>
+<p>From the navigation tabs in the upper part of the page, you can access the Datasets page.
+The Datasets page allows you to browse, search for, filter, and inspect the datasets
+available to you in the Cerebro deployment. For users who have all access to some number of
+datasets, the Datasets page also enables checking which groups have access to those
+datasets and which fields users in those groups can read.</p>
+<div class="section" id="browsing-datasets">
+<span id="browsing-datasets"></span><h4>Browsing Datasets<a class="headerlink" href="#browsing-datasets" title="Permalink to this headline">¶</a></h4>
+<p>By Default the Datasets page will show a paged list of datasets available to you, including
+summary details. Any dataset where you have any level of access will appear in this list.
+Note that this means there could be datasets in the deployment that are not shown if you
+have no read access to any field in them.</p>
+<p>Each dataset in the list shows some basic summary information such as what database
+it is in, and who the owner is. Clicking on a dataset will bring you to the dataset
+details page (described below).</p>
+<p>The left side bar contains search and filter options for the dataset list, including:</p>
+<ul class="simple">
+<li><strong>A search box</strong> where you can search by dataset name or the name of the database it is
+part of. Any dataset whose name contains your input as a substring will be shown. You can
+clear this box with the escape key.</li>
+<li><strong>‘Include in search’ checkboxes</strong> to specify whether you want to search just dataset
+name, database name, or both.</li>
+<li><strong>A ‘Filter by database’ multi-select box</strong> that allows you to filter the list to only
+datasets in a particular database or set of databases.</li>
+<li><strong>A ‘Search’ button</strong> that will apply the search and update the dataset list to match
+your currently selected filters and search.</li>
+</ul>
+<p>Additionally, if there are databases to which you have all access, you will see a
+<strong>Compare Access</strong> button in the top right of the datasets list. Clicking on this button
+will allow you to inspect which groups have access to those databases. When you click
+<strong>Compare Access</strong>:</p>
+<ul>
+<li><p class="first">The list of datasets displayed will be filtered to only show those databases for which
+you have all access</p>
+</li>
+<li><p class="first">You will see a multi-select box where you can select a group or set of groups to see
+which datasets those groups have access to. Only groups with some level of access to your
+datasets will be shown in this multi-select; any group not in the available list has no
+access to any of the datasets that are visible.</p>
+</li>
+<li><p class="first">An <strong>Apply</strong> button that applies the currently selected set of groups to the access
+column view.</p>
+</li>
+<li><p class="first">A column is added to every dataset showing whether the group or groups being inspected
+can access any field in the dataset. A <strong>checkmark</strong> in this column indicates that the
+group or set of groups combined can access the dataset, a <strong>lock</strong> icon is displayed when
+the groups have no access.</p>
+<p><em>Note that access is treated as a logical OR of the groups’ individual access–if any
+of the selected groups have access to a dataset, you will see a checkmark for that
+group.</em></p>
+</li>
+</ul>
+</div>
+<div class="section" id="dataset-details">
+<span id="dataset-details"></span><h4>Dataset Details<a class="headerlink" href="#dataset-details" title="Permalink to this headline">¶</a></h4>
+<p>Clicking on a dataset in the dataset list will open that dataset’s details page. This page
+contains:</p>
+<ul class="simple">
+<li>The dataset’s metadata, including<ul>
+<li>Database name</li>
+<li>Dataset name</li>
+<li>Owner</li>
+<li>Description</li>
+</ul>
+</li>
+<li>The dataset schema described in full<ul>
+<li>Each column in the dataset is shown, including<ul>
+<li>Name</li>
+<li>Type</li>
+<li>Access (whether you have read-access to view the cells in this column)</li>
+</ul>
+</li>
+<li>If a column’s name has a gray background, it is a partitioning column</li>
+<li>If you do not have access to a column, click “See Groups” in the row<ul>
+<li>You will see a list of groups; your account will need to be added to at least
+one of these groups to gain access to the column</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Dataset preview<ul>
+<li>After clicking on a dataset from the dataset browser, click on “Show Preview” in
+the upper right part of the page<ul>
+<li>A sample of the rows in that dataset will show in a dialog</li>
+</ul>
+</li>
+<li>No more than 200 rows will be shown (to find out how to view more,
+see “Dataset usage” below)</li>
+<li>You will not see information for columns for which you have no access</li>
+<li>The dialog can scroll vertically <em>as well as</em> horizontally</li>
+</ul>
+</li>
+<li>Dataset usage<ul>
+<li>After clicking on a dataset from the dataset browser, click “Get Started” in the
+upper right part of the page</li>
+<li>Up to four sections of sample code will be show (Spark, Hive, Python, and R)</li>
+<li>Click on the tab of your choice and copy/paste the code into the associated
+environment to use this dataset outside of the Web UI</li>
+</ul>
+</li>
+</ul>
+<p>If you have all access to the dataset, you will also see an ‘Access’ tab where you can
+inspect which groups have access to which fields in the dataset. Clicking on the access
+tab will show you a similar experience to what is available on the dataset search page.
+There will be a column with:</p>
+<ul class="simple">
+<li>A <strong>multi-select box</strong> where you can select a group or set of groups to see
+which fields in the dataset those groups have access to. Like the dataset access view,
+only groups with some level of access to the dataset will be shown in this multi-select.
+Any group not shown has no access.</li>
+<li>An <strong>Apply</strong> button that applies the currently selected set of groups to the access
+column view.</li>
+<li><strong>checkmark</strong> or <strong>lock</strong> icons indicating whether the currently selected groups
+have access to the field or not.</li>
+</ul>
+<p>Additionally, the access tab lets you compare up to three different sets of groups’ access
+at the same time by selecting different sets of groups in the three different access
+columns.</p>
+</div>
+</div>
+<div class="section" id="credentials">
+<span id="credentials"></span><h3>Credentials<a class="headerlink" href="#credentials" title="Permalink to this headline">¶</a></h3>
+<p>Your credentials are saved in the browser until either your token expires, or you
+explicitly log out. Be aware of this when sharing access to your computer.</p>
+<p>To logout, click your username in the upper right part of the screen, then click “Logout”.</p>
+</div>
+<div class="section" id="troubleshooting">
+<span id="troubleshooting"></span><h3>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h3>
+<p>If you experience a problem with a particular aspect of the Web UI, or notice that
+features do not work as described or expected, please take a screenshot or video capture.
+If possible, click the “About” link in the upper right part of the page and take note
+(e.g. another screenshot) of the details in the dialog that pops up. These version
+numbers will help to diagnose and fix issues that arise.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Cerebro Web UI</a><ul>
+<li><a class="reference internal" href="#get-started">Get started</a></li>
+<li><a class="reference internal" href="#features">Features</a><ul>
+<li><a class="reference internal" href="#home-page">Home Page</a></li>
+<li><a class="reference internal" href="#datasets-page">Datasets Page</a><ul>
+<li><a class="reference internal" href="#browsing-datasets">Browsing Datasets</a></li>
+<li><a class="reference internal" href="#dataset-details">Dataset Details</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#credentials">Credentials</a></li>
+<li><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/WebUI.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, azzy.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+    </div>
+  </body>
+</html>

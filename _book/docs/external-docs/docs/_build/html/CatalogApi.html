@@ -1,0 +1,232 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Catalog REST API &#8212; cerebro test doc .8 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="catalog-rest-api">
+<span id="catalog-rest-api"></span><h1>Catalog REST API<a class="headerlink" href="#catalog-rest-api" title="Permalink to this headline">¶</a></h1>
+<p>This document describes the REST API of the Cerebro Catalog. This is intended for clients
+that want to leverage all of the Cerebro functionality. In addition to this, clients can
+connect using existing APIs, such as the Hive Metastore API.</p>
+<p>The purpose of this API is to provide programmatic access to interact with the catalog.
+For users that want to interactively access the catalog, it is recommended to use the
+<code class="docutils literal notranslate"><span class="pre">dbcli</span></code>, which provides a more traditional CLI experience built on top of these
+APIs.</p>
+<div class="section" id="authentication">
+<span id="authentication"></span><h2>Authentication<a class="headerlink" href="#authentication" title="Permalink to this headline">¶</a></h2>
+<p>Unless otherwise specified, the APIs require users to be authenticated. In general,
+authentication can be done via Kerberos or by tokens. For token based authentication,
+simply specify the token in the auth header: <code class="docutils literal notranslate"><span class="pre">authorization:</span> <span class="pre">Bearer</span> <span class="pre">&lt;TOKEN&gt;</span></code>.</p>
+<p>See the <a class="reference external" href="Authentication.md">authentication document</a>
+for details on how to get tokens and check if token authentication is working.</p>
+</div>
+<div class="section" id="ssl">
+<span id="ssl"></span><h2>SSL<a class="headerlink" href="#ssl" title="Permalink to this headline">¶</a></h2>
+<p>If ssl is enabled, all the calls should be made against https, instead of http. They are
+otherwise unchanged.</p>
+</div>
+<div class="section" id="executing-hive-ddl">
+<span id="executing-hive-ddl"></span><h2>Executing Hive DDL<a class="headerlink" href="#executing-hive-ddl" title="Permalink to this headline">¶</a></h2>
+<p>Endpoint: <code class="docutils literal notranslate"><span class="pre">/api/hive-ddl</span></code> [POST]</p>
+<p>This API allows you to execute HiveQL DDL statements. This can be used to create
+datasets, create roles, issues grants, etc. The purpose of this API is to be compatible
+with <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL">beeline</a>.</p>
+<p>The POST request takes as a parameter:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;query&quot;</span> <span class="p">[</span><span class="n">String</span><span class="p">]:</span> <span class="n">Required</span><span class="p">,</span> <span class="n">HiveQL</span> <span class="n">DDL</span> <span class="n">statement</span><span class="o">.</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Example:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>curl -H <span class="s2">&quot;Content-Type: application/json&quot;</span> -X POST -d <span class="s1">&#39;{&quot;query&quot;:&quot;show databases&quot;}&#39;</span> localhost:5000/api/hive-ddl
+</pre></div>
+</div>
+<p>As is the case with most SQL dialects, user names containing a dash need to be escaped.
+This is accomplished by wrapping the username in backticks.</p>
+<p>Example:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>curl -H <span class="s2">&quot;Content-Type: application/json&quot;</span> -X POST -d <span class="s1">&#39;{&quot;query&quot;:&quot;create role `user-one`&quot;}&#39;</span> localhost:5000/api/hive-ddl
+</pre></div>
+</div>
+</div>
+<div class="section" id="listing-databases">
+<span id="listing-databases"></span><h2>Listing databases<a class="headerlink" href="#listing-databases" title="Permalink to this headline">¶</a></h2>
+<p>Endpoint: <code class="docutils literal notranslate"><span class="pre">/api/databases</span></code> [GET]<br/>
+Endpoint: <code class="docutils literal notranslate"><span class="pre">/api/databases</span></code> [POST]</p>
+<p>The POST request takes as a parameter:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;filter&quot;</span> <span class="p">[</span><span class="n">String</span><span class="p">]:</span> <span class="n">Optional</span><span class="p">,</span> <span class="nb">filter</span> <span class="n">on</span> <span class="n">the</span> <span class="n">name</span> <span class="n">of</span> <span class="n">databases</span> <span class="n">to</span> <span class="k">return</span><span class="o">.</span> <span class="n">For</span> <span class="n">example</span><span class="p">,</span>
+      <span class="s1">&#39;log*&#39;</span> <span class="n">returns</span> <span class="nb">all</span> <span class="n">databases</span> <span class="n">that</span> <span class="n">start</span> <span class="k">with</span> <span class="s1">&#39;log&#39;</span><span class="o">.</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="listing-datasets">
+<span id="listing-datasets"></span><h2>Listing datasets<a class="headerlink" href="#listing-datasets" title="Permalink to this headline">¶</a></h2>
+<p>Endpoint: <code class="docutils literal notranslate"><span class="pre">/api/datasets</span></code> [GET]<br>
+Endpoint: <code class="docutils literal notranslate"><span class="pre">/api/datasets</span></code> [POST]</p>
+<p>The POST request takes as a parameter:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;db&quot;</span> <span class="p">[</span><span class="n">String</span><span class="p">]:</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">database</span> <span class="n">to</span> <span class="n">retrieve</span> <span class="n">datasets</span> <span class="n">from</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="s1">&#39;default&#39;</span><span class="o">.</span>
+  <span class="s2">&quot;filter&quot;</span> <span class="p">[</span><span class="n">String</span><span class="p">]:</span> <span class="n">Optional</span><span class="p">,</span> <span class="nb">filter</span> <span class="n">on</span> <span class="n">the</span> <span class="n">name</span> <span class="n">of</span> <span class="n">datasets</span> <span class="n">to</span> <span class="k">return</span><span class="o">.</span> <span class="n">For</span> <span class="n">example</span><span class="p">,</span>
+      <span class="s1">&#39;log*&#39;</span> <span class="n">returns</span> <span class="nb">all</span> <span class="n">datasets</span> <span class="n">that</span> <span class="n">start</span> <span class="k">with</span> <span class="s1">&#39;log&#39;</span><span class="o">.</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="details-of-a-dataset">
+<span id="details-of-a-dataset"></span><h2>Details of a dataset<a class="headerlink" href="#details-of-a-dataset" title="Permalink to this headline">¶</a></h2>
+<p>Endpoint: <code class="docutils literal notranslate"><span class="pre">/api/datasets/{name}</span></code> [POST]</p>
+<p>Returns: Dataset information as json. This includes the schema as well as other
+information.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s1">&#39;db&#39;</span> <span class="p">[</span><span class="n">String</span><span class="p">]:</span> <span class="n">Database</span> <span class="n">containing</span> <span class="n">this</span> <span class="n">dataset</span><span class="o">.</span>
+  <span class="s1">&#39;name&#39;</span> <span class="p">[</span><span class="n">String</span><span class="p">]:</span> <span class="n">Name</span> <span class="n">of</span> <span class="n">dataset</span>
+  <span class="s1">&#39;schema&#39;</span> <span class="p">[</span><span class="n">List</span><span class="p">]:</span> <span class="n">List</span> <span class="n">of</span> <span class="n">columns</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">curl</span> <span class="o">-</span><span class="n">X</span> <span class="n">POST</span> <span class="n">localhost</span><span class="p">:</span><span class="mi">5000</span><span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">datasets</span><span class="o">/</span><span class="n">cerebro_sample</span><span class="o">.</span><span class="n">sample</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="scanning-a-dataset">
+<span id="scanning-a-dataset"></span><h2>Scanning a dataset<a class="headerlink" href="#scanning-a-dataset" title="Permalink to this headline">¶</a></h2>
+<p>Endpoint: <code class="docutils literal notranslate"><span class="pre">/api/scan/{name}</span></code> [GET] <br>
+Endpoint: <code class="docutils literal notranslate"><span class="pre">/api/scanpage/{name}</span></code> [GET]&lt; <br>
+Endpoint: <code class="docutils literal notranslate"><span class="pre">/api/scan</span></code> [POST] <br>
+Endpoint: <code class="docutils literal notranslate"><span class="pre">/api/scanpage</span></code> [POST]</p>
+<p>Returns dataset as json. The scan API will only return the initial rows. Scanpage returns
+a handle that can be used to retrieve all the records.</p>
+<p>Example:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>curl localhost:5000/api/scan/cerebro_sample.sample
+</pre></div>
+</div>
+<p>The POST request takes as a parameter:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;query&quot;</span> <span class="p">[</span><span class="n">String</span><span class="p">]:</span>   <span class="s2">&quot;SQL Query to execute&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">curl</span> <span class="o">-</span><span class="n">X</span> <span class="n">POST</span> <span class="o">-</span><span class="n">H</span> <span class="s1">&#39;Content-Type: application/json&#39;</span> \
+<span class="o">-</span><span class="n">d</span> <span class="s1">&#39;{&quot;query&quot; : &quot;select uid, ccn from cerebro.sample.users&quot;}&#39;</span> <span class="n">localhost</span><span class="p">:</span><span class="mi">5000</span><span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">scan</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">scanpage</span></code> API accepts two optional argument <code class="docutils literal notranslate"><span class="pre">records=</span></code>, which is the total number
+of records to return for the query, and <code class="docutils literal notranslate"><span class="pre">session_id</span></code>. The API returns records in batches
+of up to 10,000.</p>
+<p>NOTE: in releases prior to 0.7.0, the records parameter was used to specify the
+batch size.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">session_id</span></code> value is used on subsequent queries to return successive batches of
+records. It must be omitted on the first query.</p>
+<p>NOTE: session ids are only valid for 30-seconds, starting from the time that the CDAS
+cluster starts returning data. That timer is reset each time a query is received for
+a given session_id.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl &lt;cdas_rest_server_endpoint&gt;/api/scanpage/products?user<span class="o">=</span>presto
+$ curl &lt;cdas_rest_server_endpoint&gt;/api/scanpage/products?user<span class="o">=</span>presto<span class="p">&amp;</span><span class="nv">records</span><span class="o">=</span><span class="m">25000</span>
+$ curl &lt;cdas_rest_server_endpoint&gt;/api/scanpage/products?user<span class="o">=</span>presto<span class="p">&amp;</span><span class="nv">session_id</span><span class="o">=</span>77480ad07d743bb1:b4f7822f036c6c91
+</pre></div>
+</div>
+<p>Each returned object contains:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s1">&#39;records&#39;</span> <span class="p">[</span><span class="n">List</span><span class="p">]:</span> <span class="n">Each</span> <span class="n">entry</span> <span class="ow">is</span> <span class="n">an</span> <span class="nb">object</span> <span class="n">containing</span> <span class="n">the</span> <span class="n">field</span> <span class="n">names</span><span class="p">,</span> <span class="n">types</span> <span class="ow">and</span> <span class="n">values</span> <span class="n">of</span> <span class="n">each</span> <span class="n">record</span><span class="o">.</span>
+  <span class="s1">&#39;session_id&#39;</span> <span class="p">[</span><span class="n">String</span><span class="p">]:</span> <span class="n">Key</span> <span class="n">used</span> <span class="n">to</span> <span class="k">return</span> <span class="n">subsequent</span> <span class="s1">&#39;pages&#39;</span><span class="o">.</span>  <span class="n">Each</span> <span class="n">page</span> <span class="n">contains</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">10</span><span class="p">,</span><span class="mi">000</span> <span class="n">entries</span><span class="o">.</span>  <span class="n">When</span> <span class="n">the</span> <span class="n">final</span> <span class="n">page</span> <span class="ow">is</span> <span class="n">returned</span><span class="p">,</span> <span class="s1">&#39;session_id&#39;</span> <span class="ow">is</span> <span class="s2">&quot;-1&quot;</span><span class="o">.</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Catalog REST API</a><ul>
+<li><a class="reference internal" href="#authentication">Authentication</a></li>
+<li><a class="reference internal" href="#ssl">SSL</a></li>
+<li><a class="reference internal" href="#executing-hive-ddl">Executing Hive DDL</a></li>
+<li><a class="reference internal" href="#listing-databases">Listing databases</a></li>
+<li><a class="reference internal" href="#listing-datasets">Listing datasets</a></li>
+<li><a class="reference internal" href="#details-of-a-dataset">Details of a dataset</a></li>
+<li><a class="reference internal" href="#scanning-a-dataset">Scanning a dataset</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/CatalogApi.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, azzy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/CatalogApi.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

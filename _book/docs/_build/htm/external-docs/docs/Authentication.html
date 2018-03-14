@@ -1,0 +1,289 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cerebro Data Access Service Authentication &#8212; cerebro data pre-release  documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cerebro-data-access-service-authentication">
+<span id="cerebro-data-access-service-authentication"></span><h1>Cerebro Data Access Service Authentication<a class="headerlink" href="#cerebro-data-access-service-authentication" title="Permalink to this headline">¶</a></h1>
+<p>All Cerebro services are authenticated. We provide two mechanisms for authentication:</p>
+<ol class="simple">
+<li>Kerberos &amp; Cerebro Tokens</li>
+<li>JSON Web Tokens (JWT)</li>
+</ol>
+<p>Users can configure either or both options. If both are configured, clients can
+authenticate using either method.</p>
+<div class="section" id="cerebro-tokens">
+<span id="cerebro-tokens"></span><h2>Cerebro Tokens<a class="headerlink" href="#cerebro-tokens" title="Permalink to this headline">¶</a></h2>
+<p>Kerberos authentication is required and is used to bootstrap Cerebro tokens. Token based
+authentication is optional, depending on the needs of the client application. We recommend
+using Kerberos authentication if possible (e.g. Hadoop integration) and using token based
+authentication for non-kerberized clients (e.g. python).</p>
+<p>Note that to get a Cerebro token, you are required to first connect with a kerberized
+connection. You cannot get a user token otherwise.</p>
+</div>
+<div class="section" id="jwt-tokens">
+<span id="jwt-tokens"></span><h2>JWT Tokens<a class="headerlink" href="#jwt-tokens" title="Permalink to this headline">¶</a></h2>
+<p>Cerebro can use JSON Web Tokens (JWT) for authentication. These tokens can either be
+generated externally and provided to CDAS, or CDAS can be configured to work with an
+external service (via REST) to acquire and validate JWTs. If only JWTs are used for
+authentication, CDAS will also require that a system token be generated for it to use
+to authenticate internal services. This would, for example, be a token with
+<code class="docutils literal notranslate"><span class="pre">cerebro</span></code> as the subject.</p>
+<p>Cerebro supports the standard JWT claims include:</p>
+<ul class="simple">
+<li>sub</li>
+<li>exp</li>
+<li>nbf</li>
+</ul>
+<p>For specifying groups that the token subject is a member of, Cerebro suggests using the
+claim “groups” and storing the associated value as a list of strings.</p>
+<p>Example JWT payload:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;sub&quot;</span><span class="p">:</span> <span class="s2">&quot;John Doe&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;iss&quot;</span><span class="p">:</span> <span class="s2">&quot;cerebrodata.com&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;groups&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="s2">&quot;web_user&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;philatelist&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;cat_person&quot;</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;exp&quot;</span><span class="p">:</span> <span class="mi">1590510807</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="hadoop-integration">
+<span id="hadoop-integration"></span><h2>Hadoop integration<a class="headerlink" href="#hadoop-integration" title="Permalink to this headline">¶</a></h2>
+<p>With all Hadoop analytics tools, clients will need to configure
+<code class="docutils literal notranslate"><span class="pre">recordservice.kerberos.principal</span></code> to be the value of CEREBRO_KERBEROS_PRINCIPAL in
+their client configs. This can be set in mapred-site.xml or yarn-site.xml.</p>
+</div>
+<div class="section" id="kerberos-authentication">
+<span id="kerberos-authentication"></span><h2>Kerberos authentication<a class="headerlink" href="#kerberos-authentication" title="Permalink to this headline">¶</a></h2>
+<p>There are multiple clients that can be used to call the REST API. We demonstrate in this
+document using curl as it is very available but we recommend using a language specific
+library if possible For example, for python, we recommend using the
+<a class="reference external" href="https://github.com/requests/requests-kerberos">request_kerberos package</a>.</p>
+<div class="section" id="testing-authentication">
+<span id="testing-authentication"></span><h3>Testing authentication<a class="headerlink" href="#testing-authentication" title="Permalink to this headline">¶</a></h3>
+<p>This assumes the user has already logged in to kerberos via <code class="docutils literal notranslate"><span class="pre">kinit</span></code>.</p>
+<p>To connect from curl, add the option <code class="docutils literal notranslate"><span class="pre">--negotiate</span> <span class="pre">-u</span> <span class="pre">:</span></code> to the command. For example:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl --negotiate -u : CDAS_REST_SERVER_HOST:PORT/api/health-authenticated
+<span class="o">{</span>
+  <span class="s2">&quot;health&quot;</span>: <span class="s2">&quot;ok&quot;</span>,
+  <span class="s2">&quot;token&quot;</span>: null,
+  <span class="s2">&quot;user&quot;</span>: <span class="s2">&quot;YOU@REALM&quot;</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="kerberos-principals">
+<span id="kerberos-principals"></span><h3>Kerberos principals<a class="headerlink" href="#kerberos-principals" title="Permalink to this headline">¶</a></h3>
+<p>Many REST clients, including curl, assume the REST server’s kerberos principal to be:
+<code class="docutils literal notranslate"><span class="pre">HTTP/&lt;ip/dns</span> <span class="pre">name</span> <span class="pre">of</span> <span class="pre">server&gt;&#64;REALM</span></code>. Cerebro does not have this requirement and can use
+any hostname as the principal. If you have not configured Cerebro to have the expected
+principal, you will need to specify additional arguments to curl. The command above
+should instead be:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl --negotiate -u : --resolve &lt;CEREBRO_PRINCIPAL_SERVICE_HOST&gt;:PORT:&lt;IP_ADDRESS_OF_REST_SERVER&gt; http://&lt;CEREBRO_PRINCIPAL_SERVICE_HOST&gt;/api/health-authenticated
+
+<span class="c1"># For example, if the Cerebro service kerberos principal is HTTP/cerebro-service@REALM and</span>
+<span class="c1"># the server was running on 1.1.1.1 on port 7000, the connection string would be</span>
+$ curl --negotiate -u : --resolve cerebro-service:7000:1.1.1.1 http://cerebro-service:7000/api/health-authenticated
+</pre></div>
+</div>
+<p>If using the requests-kerberos python library, this can be achieved by specifying the
+<code class="docutils literal notranslate"><span class="pre">hostname_override</span></code> option. In this example, you would specify <code class="docutils literal notranslate"><span class="pre">cerebro-service</span></code>
+for the value.</p>
+</div>
+</div>
+<div class="section" id="cerebro-token-authentication">
+<span id="cerebro-token-authentication"></span><h2>Cerebro token authentication<a class="headerlink" href="#cerebro-token-authentication" title="Permalink to this headline">¶</a></h2>
+<p>Tokens are suitable when accessing through a client that may not have have a kerberized
+connection to CDAS. In this case, the user can request a token and make requests using
+the token. CDAS will resolve the token to the user that originally requested it.</p>
+<p>The token can be used to authenticate all calls to the REST server by additionally
+providing it to the REST API.</p>
+<div class="section" id="getting-a-cerebro-token">
+<span id="getting-a-cerebro-token"></span><h3>Getting a Cerebro token<a class="headerlink" href="#getting-a-cerebro-token" title="Permalink to this headline">¶</a></h3>
+<p>To get a Cerebro token, call the get-token REST API. Note you must be kerberos
+authenticated.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl --negotiate -u : -X POST &lt;CDAS REST HOST:PORT&gt;/api/get-token
+<span class="o">{</span>
+  <span class="s2">&quot;token&quot;</span>: <span class="s2">&quot;AARub25nABFub25nQENFUkVCUk8uVEVTVIoBWoZGWxKKAVqqUt8SAQI</span>$<span class="s2">.pklsqRlTrFFyEPSHVjItxqBrZ28</span>$<span class="s2">&quot;</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>You can verify the token with (this does not need a kerberized connection):</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl -H <span class="s1">&#39;authorization: Bearer AARub25nABFub25nQENFUkVCUk8uVEVTVIoBWoZGWxKKAVqqUt8SAQI$.pklsqRlTrFFyEPSHVjItxqBrZ28$&#39;</span> &lt;CDAS REST HOST:PORT&gt;/api/get-user
+<span class="c1"># Should return your user name, among other fields.</span>
+<span class="o">{</span>
+  <span class="s2">&quot;user&quot;</span>: <span class="s2">&quot;&lt;YOU&gt;&quot;</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="using-the-token">
+<span id="using-the-token"></span><h2>Using the token<a class="headerlink" href="#using-the-token" title="Permalink to this headline">¶</a></h2>
+<p>To use the token, specify the token in the auth header. For example, to scan data:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl -H <span class="s1">&#39;authorization: Bearer &lt;TOKEN&gt;&#39;</span> &lt;CDAS_REST_HOST:PORT&gt;/api/scan/&lt;dataset&gt;
+</pre></div>
+</div>
+<p>Similarly, to get the databases:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl -H <span class="s1">&#39;authorization: Bearer &lt;TOKEN&gt;&#39;</span> &lt;CDAS_REST_HOST:PORT&gt;/api/databases
+</pre></div>
+</div>
+</div>
+<div class="section" id="jwt">
+<span id="jwt"></span><h2>JWT<a class="headerlink" href="#jwt" title="Permalink to this headline">¶</a></h2>
+<p>JWTs can be used in two different ways: 1) by providing the services with both the public
+key used to sign the tokens and the algorithm that was used (RSA256, RSA512, etc.) or 2)
+by configuring two remote endpoints, one for acquiring tokens and another for validating
+tokens.</p>
+<p>For either of these approaches, if you are also using JWT for authenticating communication
+between services, generate a token with the subject “cerebro” that can be read by the
+method that you setup.</p>
+<p>example:
+<code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">SYSTEM_TOKEN=/etc/cerebro.token</span></code></p>
+<div class="section" id="public-key-approach">
+<span id="public-key-approach"></span><h3>Public Key Approach<a class="headerlink" href="#public-key-approach" title="Permalink to this headline">¶</a></h3>
+<p>To configure the public key, the environment variable JWT_PUBLIC_KEY should be a full
+path to the public key. NOTE: this key must be in openssl PKCS#8 format. To configure
+the algorithm, the environment variable JWT_ALGORITHM should be set to a string
+indicating the algorithm used. Currently support algorithms are “RSA256”, “RSA512”.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># example:</span>
+<span class="nb">export</span> <span class="nv">JWT_PUBLIC_KEY</span><span class="o">=</span>/etc/id_rsa.512.pub
+<span class="nb">export</span> <span class="nv">JWT_ALGORITHM</span><span class="o">=</span>RSA512
+</pre></div>
+</div>
+</div>
+<div class="section" id="external-endpoint-approach">
+<span id="external-endpoint-approach"></span><h3>External Endpoint Approach<a class="headerlink" href="#external-endpoint-approach" title="Permalink to this headline">¶</a></h3>
+<p>To configure the external service approach, you will need to configure an endpoint for
+validating tokens via the JWT_AUTHENTICATION_SERVER_URL configuration. Optionally,
+if you want users to be able to acquire tokens (via the <code class="docutils literal notranslate"><span class="pre">dbcli</span> <span class="pre">get-token</span></code> command, for
+example), you can configure an endpoint that will accept a REST request with the
+following fields in the body: “username”, “password” The configuration for the external
+token-granting endpoint is SSO_URL.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># example:</span>
+<span class="nb">export</span> <span class="nv">JWT_AUTHENTICATION_SERVER_URL</span><span class="o">=</span>http://10.1.11.153:8900/idp/userinfo.openid
+<span class="nb">export</span> <span class="nv">SSO_URL</span><span class="o">=</span>http://10.1.11.153:8900/as/token.oauth2
+</pre></div>
+</div>
+</div>
+<div class="section" id="using-both-approaches">
+<span id="using-both-approaches"></span><h3>Using both approaches<a class="headerlink" href="#using-both-approaches" title="Permalink to this headline">¶</a></h3>
+<p>If you have the need to support both approaches, simply configure the environment
+variables for both and they will each be instantiated. The external endpoint will
+be used first and if the JWT is not validated by that service, it will then be
+passed to the public key authenticator for validation.</p>
+</div>
+</div>
+<div class="section" id="using-a-jwt-with-curl">
+<span id="using-a-jwt-with-curl"></span><h2>Using a JWT with curl<a class="headerlink" href="#using-a-jwt-with-curl" title="Permalink to this headline">¶</a></h2>
+<p>Usage of the token is identical to a Cerebro token and can be used interchangeably.</p>
+<p>To list the databases via curl, the JWT can be passed in the authorization header.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>curl &lt;CDAS_REST_HOST:PORT&gt;/api/databases -H <span class="s1">&#39;authorization: Bearer &lt;token&gt;&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Cerebro Data Access Service Authentication</a><ul>
+<li><a class="reference internal" href="#cerebro-tokens">Cerebro Tokens</a></li>
+<li><a class="reference internal" href="#jwt-tokens">JWT Tokens</a></li>
+<li><a class="reference internal" href="#hadoop-integration">Hadoop integration</a></li>
+<li><a class="reference internal" href="#kerberos-authentication">Kerberos authentication</a><ul>
+<li><a class="reference internal" href="#testing-authentication">Testing authentication</a></li>
+<li><a class="reference internal" href="#kerberos-principals">Kerberos principals</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#cerebro-token-authentication">Cerebro token authentication</a><ul>
+<li><a class="reference internal" href="#getting-a-cerebro-token">Getting a Cerebro token</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#using-the-token">Using the token</a></li>
+<li><a class="reference internal" href="#jwt">JWT</a><ul>
+<li><a class="reference internal" href="#public-key-approach">Public Key Approach</a></li>
+<li><a class="reference internal" href="#external-endpoint-approach">External Endpoint Approach</a></li>
+<li><a class="reference internal" href="#using-both-approaches">Using both approaches</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#using-a-jwt-with-curl">Using a JWT with curl</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/external-docs/docs/Authentication.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, azzy.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,182 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cluster Administration &#8212; Cerebro Data 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cluster-administration">
+<span id="cluster-administration"></span><h1>Cluster Administration<a class="headerlink" href="#cluster-administration" title="Permalink to this headline">¶</a></h1>
+<p>This document describes how to use the CLI to administer running clusters. Refer to
+the <a class="reference external" href="Install.md">Installation</a> document for details on how to create new clusters.</p>
+<p>As a reminder, a single DeploymentManager can administer multiple CDAS clusters.</p>
+<div class="section" id="prerequisites">
+<span id="prerequisites"></span><h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">cerebro_cli</span></code> must be installed and configured to the DeploymentManager. You can ensure
+connectivity with</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cerebro_cli status
+</pre></div>
+</div>
+</div>
+<div class="section" id="scaling-an-existing-cluster">
+<span id="scaling-an-existing-cluster"></span><h2>Scaling an Existing Cluster<a class="headerlink" href="#scaling-an-existing-cluster" title="Permalink to this headline">¶</a></h2>
+<p>An existing cluster can be scaled to a new size (must be &gt;= 1). This can be done from
+the CLI using the update command:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cerebro_cli clusters update --numNodes<span class="o">=</span>&lt;desired size&gt; &lt;CLUSTER_ID&gt;
+<span class="c1"># For example to scale cluster 1 to 20 nodes,</span>
+cerebro_cli clusters update --numNodes<span class="o">=</span><span class="m">20</span> <span class="m">1</span>
+</pre></div>
+</div>
+<p>This can be used to scale a cluster up or down. Cerebro will manage the life cycle of
+the underlying machines, launching new ones and terminating scaled down ones as required.</p>
+<p>Available in: 0.4.0+. The cluster must have been created using the <code class="docutils literal notranslate"><span class="pre">--launchScript</span></code> option.</p>
+</div>
+<div class="section" id="setting-the-number-of-planners">
+<span id="setting-the-number-of-planners"></span><h2>Setting the Number of Planners<a class="headerlink" href="#setting-the-number-of-planners" title="Permalink to this headline">¶</a></h2>
+<p>Cerebro will by default pick the number of planners to run but the optimal number
+depends on the environment and workload. For users that want to fine tune the
+cluster, the number can be controlled using the <code class="docutils literal notranslate"><span class="pre">clusters</span> <span class="pre">update</span></code> command.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cerebro_cli clusters update --numPlanners<span class="o">=</span>&lt;desired number&gt; &lt;CLUSTER_ID&gt;
+</pre></div>
+</div>
+<p>This number cannot exceed the cluster size and will require restarting the
+cluster to take effect.</p>
+</div>
+<div class="section" id="enable-termination-protection">
+<span id="enable-termination-protection"></span><h2>Enable Termination Protection<a class="headerlink" href="#enable-termination-protection" title="Permalink to this headline">¶</a></h2>
+<p>Clusters can be marked to have termination protection enabled. If enabled, this will
+prevent the cluster from being scaled or terminated without first explicitly disabling
+it (and then probably enabling it again). This is to prevent accidentally
+misconfiguring a running cluster. To do so:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cerebro_cli clusters update --terminationProtectionEnabled<span class="o">=</span>&lt;true/false&gt; &lt;CLUSTER_ID&gt;
+<span class="c1"># For example, to enable it for cluster 5</span>
+cerebro_cli clusters update --terminationProtectionEnabled<span class="o">=</span><span class="nb">true</span> <span class="m">5</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="upgrading-an-existing-cluster">
+<span id="upgrading-an-existing-cluster"></span><h2>Upgrading an Existing Cluster<a class="headerlink" href="#upgrading-an-existing-cluster" title="Permalink to this headline">¶</a></h2>
+<p>An existing cluster can be upgraded with new version of CDAS components. The CLI command
+can be used to upgrade one or more components. After upgrade the cluster is restarted
+with the newer components and features. Both version and components options cannot be
+specified at the same time.</p>
+<p>To upgrade all components in an existing cluster to a new version, specify version only.
+To upgrade specific components to a different version, specify components only.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cerebro_cli clusters upgrade --components<span class="o">=</span>&lt;comp:version list&gt; &lt;CLUSTER_ID&gt;
+
+<span class="c1"># For example to upgrade cluster 2&#39;s CDAS components to version 0.6.0 and web UI</span>
+<span class="c1"># to 0.6.1:</span>
+cerebro_cli clusters upgrade --components<span class="o">=</span>cdas:0.6.0,web-ui:0.6.1 <span class="m">2</span>
+
+<span class="c1"># To upgrade all CDAS components in cluster 3 to version 0.4.5.</span>
+cerebro_cli clusters upgrade --version<span class="o">=</span><span class="m">0</span>.4.5 <span class="m">3</span>
+</pre></div>
+</div>
+<div class="section" id="set-new-cluster-version">
+<span id="set-new-cluster-version"></span><h3>Set New Cluster Version<a class="headerlink" href="#set-new-cluster-version" title="Permalink to this headline">¶</a></h3>
+<p>To configure the DeploymentManager so that new clusters use upgraded version of CDAS
+components, use <code class="docutils literal notranslate"><span class="pre">cerebro_cli</span> <span class="pre">clusters</span> <span class="pre">set_default_version</span></code>.</p>
+<p>Example: If your current version is 0.5.0, and would like to upgrade any new cluster to
+be running version 0.5.0 of the product, but with the planner and workers updated to 0.5.1</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cerebro_cli clusters set_default_version --version<span class="o">=</span><span class="m">0</span>.5.0 --components<span class="o">=</span>cdas:0.5.1
+</pre></div>
+</div>
+<p>Note that <code class="docutils literal notranslate"><span class="pre">--components</span></code> option is required. It may be specified as an empty string(“”).</p>
+<p>Available in: 0.4.0+.</p>
+<p>Note that this feature is supported going forward. Upgrading from version 0.3.0 to 0.4.0
+is not supported.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Cluster Administration</a><ul>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li><a class="reference internal" href="#scaling-an-existing-cluster">Scaling an Existing Cluster</a></li>
+<li><a class="reference internal" href="#setting-the-number-of-planners">Setting the Number of Planners</a></li>
+<li><a class="reference internal" href="#enable-termination-protection">Enable Termination Protection</a></li>
+<li><a class="reference internal" href="#upgrading-an-existing-cluster">Upgrading an Existing Cluster</a><ul>
+<li><a class="reference internal" href="#set-new-cluster-version">Set New Cluster Version</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ClusterAdmin.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, azzy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/ClusterAdmin.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

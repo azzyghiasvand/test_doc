@@ -1,0 +1,258 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Secure Cerebro REST API Access using OAuth &#8212; cerebro data pre-release  documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="secure-cerebro-rest-api-access-using-oauth">
+<span id="secure-cerebro-rest-api-access-using-oauth"></span><h1>Secure Cerebro REST API Access using OAuth<a class="headerlink" href="#secure-cerebro-rest-api-access-using-oauth" title="Permalink to this headline">¶</a></h1>
+<p>The Cerebro REST API supports OAuth integration, primarily to enable easier Web UI
+access. This document explains how to set up the REST API with OAuth to make the Web UI
+login easier.</p>
+<div class="section" id="oauth-basics">
+<span id="oauth-basics"></span><h2>OAuth Basics<a class="headerlink" href="#oauth-basics" title="Permalink to this headline">¶</a></h2>
+<p>In setting up the REST API with basic OAuth integration, the REST API will be able to
+accept an OAuth code token and exchange it for a Cerebro token automatically. This
+allows the Web UI to redirect a Cerebro user from the Cerebro Login Page to a
+preconfigured OAuth service provider (e.g. Google, Ping, etc.), enabling the user to
+login from the external OAuth service. Once logged in, the Web UI uses the CDAS REST
+API to exchange the resulting OAuth token for a Cerebro token to gain access to the
+Cerebro Web UI. The user can also then copy his or her token to use it for any Cerebro
+integration point.</p>
+</div>
+<div class="section" id="prerequisites-to-enable-oauth">
+<span id="prerequisites-to-enable-oauth"></span><h2>Prerequisites to enable OAuth<a class="headerlink" href="#prerequisites-to-enable-oauth" title="Permalink to this headline">¶</a></h2>
+<p>You will need the following pieces of information about your OAuth service provider:</p>
+<ul class="simple">
+<li><strong>Client ID</strong>
+This is the OAuth client ID that the service provider requires for authenticating
+against Cerebro. OAuth service providers allow you to create new clients; as part of
+this, you will obtain a Client ID.</li>
+<li><strong>Authentication URI</strong>
+This is the URI that the OAuth service requires the user to be redirected to when
+requesting authentication. Typically, it renders an HTML login page for that service
+provider. Once the user has successfully interacted with this page, the user is
+redirect back to Cerebro with an ephemeral <code class="docutils literal notranslate"><span class="pre">access</span> <span class="pre">code</span></code>.</li>
+<li><strong>Token URI</strong>
+This is the URI that Cerebro must use to exchange the <code class="docutils literal notranslate"><span class="pre">access</span> <span class="pre">code</span></code> for a service
+provider <code class="docutils literal notranslate"><span class="pre">token</span></code>. This exchange happens in the REST API.</li>
+<li><strong>Client Secret</strong>
+This value is provided by the OAuth service provider as part of setting up a new
+client. It is required for Cerebro to establish trust when attempting the token
+exchange.</li>
+<li><strong>Redirect URIs</strong>
+This is a list of URIs that will be recognized as acceptable URIs to navigate to
+once the Authentication URI flow is over. These need to be configured in the OAuth
+service provider in the client configuration. Typically, this is just one URI: the
+location of the Cerebro Web UI’s login page, e.g. <code class="docutils literal notranslate"><span class="pre">https://my-cerebro-host:8083/login</span></code>.</li>
+<li><strong>Origin URIs</strong>
+These URIs are the same as the Redirect URIs, without the <code class="docutils literal notranslate"><span class="pre">/login</span></code> part. For example
+<code class="docutils literal notranslate"><span class="pre">https://my-cerebro-host:8083</span></code>. These values also need to be configured in the OAuth
+service provider, so it will allow redirects from the Cerebro Web UI.</li>
+<li><strong>OAuth Scopes (Optional)</strong>
+The scopes determine which information the OAuth service provider will allow the user
+to access once the token is obtained. Cerebro needs only very basic information, namely
+the subject (<code class="docutils literal notranslate"><span class="pre">sub</span></code>) in order to generate a Cerebro token. Typically, the default here
+(<code class="docutils literal notranslate"><span class="pre">openid</span> <span class="pre">profile</span> <span class="pre">email</span></code>). If there are other scopes required by your OAuth service
+provider to obtain the <code class="docutils literal notranslate"><span class="pre">sub</span></code>, you will need to set them.</li>
+<li><strong>Subject Endpoint (Optional)</strong>
+In some deployments, there may be a need to not encode the subject (<code class="docutils literal notranslate"><span class="pre">sub</span></code>) in the JWT
+response from the OAuth token exchange. In this case, Cerebro needs to know the
+endpoint to call to retrieve the subject, which is the unique user ID that Cerebro
+can use to generate the token. This endpoint is expected to return a JSON response
+with <code class="docutils literal notranslate"><span class="pre">sub</span></code> being a key on the top-level JSON object, e.g. <code class="docutils literal notranslate"><span class="pre">{&quot;sub&quot;:</span> <span class="pre">&quot;abc123&quot;,</span> <span class="pre">...}</span></code>.</li>
+</ul>
+<div class="section" id="setting-up-oauth-configurations">
+<span id="setting-up-oauth-configurations"></span><h3>Setting up OAuth configurations<a class="headerlink" href="#setting-up-oauth-configurations" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="client-secrets-json">
+<span id="client-secrets-json"></span><h4>client_secrets.json<a class="headerlink" href="#client-secrets-json" title="Permalink to this headline">¶</a></h4>
+<p>Once you have the above information, you will need to create a JSON file with this
+information encoded in it. The JSON file has the following form:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span>{
+  &quot;web&quot;: {
+    &quot;client_id&quot;: &lt;Your Client ID&gt;,
+    &quot;auth_uri&quot;: &lt;Your Authentication URI&gt;,
+    &quot;token_uri&quot;: &lt;Your Token URI&gt;,
+    &quot;client_secret&quot;: &lt;Your Client Secret&gt;,
+    &quot;redirect_uris&quot;: [&lt;Your Redirect URIs&gt;, ...],
+    &quot;javascript_origins&quot;: [&lt;Your Origin URIs&gt;, ...],
+  }
+}
+</pre></div>
+</div>
+<p>For example, if Google OAuth were to be used, after setting up a new Google OAuth
+project, we might have the following file:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;web&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;client_id&quot;</span><span class="p">:</span> <span class="s2">&quot;example12345.apps.googleusercontent.com&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;auth_uri&quot;</span><span class="p">:</span> <span class="s2">&quot;https://accounts.google.com/o/oauth2/auth&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;token_uri&quot;</span><span class="p">:</span> <span class="s2">&quot;https://accounts.google.com/o/oauth2/token&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;client_secret&quot;</span><span class="p">:</span> <span class="s2">&quot;very-secret&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;redirect_uris&quot;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="s2">&quot;https://ec2-1234.compute.amazonaws.com:8083/login&quot;</span>
+    <span class="p">],</span>
+    <span class="nt">&quot;javascript_origins&quot;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="s2">&quot;https://ec2-1234.compute.amazonaws.com:8083&quot;</span>
+    <span class="p">]</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Save this file to <code class="docutils literal notranslate"><span class="pre">/etc/cerebro/client_secrets.json</span></code>.</p>
+</div>
+<div class="section" id="environment-variables">
+<span id="environment-variables"></span><h4>Environment variables<a class="headerlink" href="#environment-variables" title="Permalink to this headline">¶</a></h4>
+<p>Cerebro looks for certain environment variables to be set in order to enable OAuth. In
+your <code class="docutils literal notranslate"><span class="pre">/etc/cerebro/env.sh</span></code> file, set the following environment variables:</p>
+<ul class="simple">
+<li><strong>CEREBRO_OAUTH_SECRETS</strong>, to <code class="docutils literal notranslate"><span class="pre">/etc/cerebro/client_secrets.json</span></code>, or wherever the
+<code class="docutils literal notranslate"><span class="pre">client_secrets.json</span></code> file is located. Setting this environment variable enables
+Cerebro OAuth.</li>
+<li><strong>CEREBRO_OAUTH_SCOPES</strong> (optional). Space-separated list of scopes required to
+obtain the <code class="docutils literal notranslate"><span class="pre">sub</span></code>. This is typically OK to leave unset, in which case the default is
+<code class="docutils literal notranslate"><span class="pre">&quot;openid</span> <span class="pre">profile</span> <span class="pre">email&quot;</span></code>.</li>
+<li><strong>CEREBRO_OAUTH_SUB_ENDPOINT</strong> (optional). URI of the endpoint where the JSON
+response with the <code class="docutils literal notranslate"><span class="pre">sub</span></code> is. This endpoint must also accept the OAuth token obtained
+from the token exchange. e.g. <code class="docutils literal notranslate"><span class="pre">https://user-data-endpoint:9999/api/openid.profile</span></code></li>
+</ul>
+<p>As an example, the OAuth part of your <code class="docutils literal notranslate"><span class="pre">env.sh</span></code> might look like this:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">CEREBRO_OAUTH_SECRETS</span><span class="o">=</span><span class="s2">&quot;/etc/cerebro/client_secrets.json&quot;</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_OAUTH_SCOPES</span><span class="o">=</span><span class="s2">&quot;openid profile&quot;</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_SUB_ENDPOINT</span><span class="o">=</span><span class="s2">&quot;https://user-data-endpoint:9999/api/openid.profile&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="verify-oauth">
+<span id="verify-oauth"></span><h3>Verify OAuth<a class="headerlink" href="#verify-oauth" title="Permalink to this headline">¶</a></h3>
+<p>Once you’ve deployed Cerebro with OAuth enabled, verify that it’s working properly.</p>
+<ul>
+<li><p class="first"><strong>Check the OAuth connection using CURL</strong>:
+The following curl command should return the authentication URI (with client secrets as
+params) in the <code class="docutils literal notranslate"><span class="pre">oauth_url</span></code> section:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl &lt;CDAS REST Server Host/Port&gt;/api/info
+<span class="o">{</span>
+  ...,
+  <span class="s2">&quot;oauth_url&quot;</span>: <span class="s2">&quot;&lt;your authentication URI plus client secrets params&gt;&quot;</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>For example:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="o">{</span>
+  <span class="s2">&quot;oauth_url&quot;</span>: <span class="s2">&quot;https://accounts.google.com/o/oauth2/auth?scope=openid+profile+email&amp;redirect_uri=.../login&amp;response_type=code&amp;client_id=abc123.apps.googleusercontent.com&amp;access_type=offline&quot;</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="use-the-web-ui">
+<span id="use-the-web-ui"></span><h3>Use the Web UI<a class="headerlink" href="#use-the-web-ui" title="Permalink to this headline">¶</a></h3>
+<p>Navigate to the Cerebro Web UI and there should be a new login option on the login page:
+“Login with OAuth”. Upon clicking it, the UI should redirect to your OAuth service
+provider’s login screen. Upon successful login, the UI should redirect back to the
+Cerebro Web UI and log you in.</p>
+</div>
+<div class="section" id="troubleshooting">
+<span id="troubleshooting"></span><h3>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h3>
+<p>If you encounter issues, look in the logs of the CDAS REST Server container, which will
+typically contain information about what went wrong.</p>
+<p>Additionally, verify the JSON validity of <code class="docutils literal notranslate"><span class="pre">client_secrets.json</span></code>. If it is not
+well-formed, the CDAS REST Server cannot read it.</p>
+<p>Finally, ensure Cerebro information is probably configured in the OAuth service
+provider, e.g. Cerebro’s Web UI host/port is configured as a valid redirect URI, the
+scopes are valid, etc.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Secure Cerebro REST API Access using OAuth</a><ul>
+<li><a class="reference internal" href="#oauth-basics">OAuth Basics</a></li>
+<li><a class="reference internal" href="#prerequisites-to-enable-oauth">Prerequisites to enable OAuth</a><ul>
+<li><a class="reference internal" href="#setting-up-oauth-configurations">Setting up OAuth configurations</a><ul>
+<li><a class="reference internal" href="#client-secrets-json">client_secrets.json</a></li>
+<li><a class="reference internal" href="#environment-variables">Environment variables</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#verify-oauth">Verify OAuth</a></li>
+<li><a class="reference internal" href="#use-the-web-ui">Use the Web UI</a></li>
+<li><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/OAuthGuide.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, azzy.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,583 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cerebro Install &#8212; Cerebro Data 1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cerebro-install">
+<span id="cerebro-install"></span><h1>Cerebro Install<a class="headerlink" href="#cerebro-install" title="Permalink to this headline">¶</a></h1>
+<p>This document describes the Cerebro install process. The result should be a fully
+operational Cerebro cluster consisting of the DeploymentManager and a running Cerebro
+Data Access Service (CDAS) cluster.</p>
+<p>The various sections included are:</p>
+<ul class="simple">
+<li><a class="reference external" href="prerequisites">Prerequisites</a></li>
+<li><a class="reference external" href="installing-the-deploymentmanager">Installing the Deployment Manager</a></li>
+<li><a class="reference external" href="starting-up-a-cdas-cluster">Starting up a CDAS Cluster</a></li>
+<li><a class="reference external" href="cerebro-upgrade">Cerebro Upgrades</a></li>
+</ul>
+<div class="section" id="prerequisites">
+<span id="prerequisites"></span><h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<p>Before you can install the various Cerebro components, the following preparatory
+work is required.</p>
+<div class="section" id="aws-prerequisites">
+<span id="aws-prerequisites"></span><h3>AWS Prerequisites<a class="headerlink" href="#aws-prerequisites" title="Permalink to this headline">¶</a></h3>
+<p>Cerebro depends on a few AWS services to be set up before installing Cerebro.</p>
+<ul class="simple">
+<li>S3 Bucket. Cerebro uses this bucket to store log files as well as stage intermediate
+config files. This bucket should be readable and writable by all instances running any
+Cerebro components. This bucket will be referred to as <code class="docutils literal notranslate"><span class="pre">CEREBRO_S3_STAGING_DIR</span></code>.</li>
+<li>RDS instance with MySQL 5.6 or Aurora (MpSQL 5.6.x compatible) provisioned. This can
+be provisioned with the configuration of your choice. Cerebro instances need read and
+write access to this database. This document will refer to this as <code class="docutils literal notranslate"><span class="pre">CEREBRO_DB_URL</span></code>.</li>
+<li>IAM credentials. Cerebro instances need read and write access to the above two. The
+DeploymentManager needs the ability to provision instances and the cluster machines
+will need credentials to your data. These can be one IAM profile with all the credentials
+or two separate role. We will refer to them as <code class="docutils literal notranslate"><span class="pre">IAM_MANAGER</span></code> and <code class="docutils literal notranslate"><span class="pre">IAM_CLUSTER</span></code>.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="installing-the-deploymentmanager">
+<span id="installing-the-deploymentmanager"></span><h2>Installing the DeploymentManager<a class="headerlink" href="#installing-the-deploymentmanager" title="Permalink to this headline">¶</a></h2>
+<p>The DeploymentManager runs on a machine separate from the machines in the cluster. This
+does not need to be its own machine.</p>
+<div class="section" id="machine-and-package-prerequisites">
+<span id="machine-and-package-prerequisites"></span><h3>Machine and Package Prerequisites<a class="headerlink" href="#machine-and-package-prerequisites" title="Permalink to this headline">¶</a></h3>
+<p>DeploymentManager machine:</p>
+<ul class="simple">
+<li>Needs to run Linux</li>
+<li>Have Java 7+ installed (OpenJDK or Sun JVM).<ul>
+<li>Java 9 is not currently supported due to a known issue</li>
+<li>Java 8 is recommended as Sun has ceased providing security updates for Java 7</li>
+</ul>
+</li>
+<li>Machine needs to have <code class="docutils literal notranslate"><span class="pre">IAM_MANAGER</span></code> credentials.</li>
+<li>Minimum instance type should be <code class="docutils literal notranslate"><span class="pre">t2.small</span></code></li>
+<li>Have <code class="docutils literal notranslate"><span class="pre">awscli</span></code> installed</li>
+</ul>
+<p>Cluster machine (this will be created by the deployment manager based on a user-defined
+launch script described later):</p>
+<ul class="simple">
+<li>RHEL 7: Cerebro will try to install java if not present. If your environment uses
+non-standard package management, see additional steps below.</li>
+<li>Machine needs to have <code class="docutils literal notranslate"><span class="pre">IAM_CLUSTER</span></code> credentials.</li>
+<li>Minimum instance type should be <code class="docutils literal notranslate"><span class="pre">t2.large</span></code> with at least 40GB of local storage.</li>
+</ul>
+<p>Network:</p>
+<ul class="simple">
+<li>We expect full network connectivity between the machines in the cluster and the
+DeploymentManager machine.</li>
+</ul>
+<p>In addition, you will need to install the Cerebro CLI. The machine running the CLI
+needs to have network access to the DeploymentManager and cluster machines. The CLI
+can be installed on the DeploymentManager or a local development machine. To run the
+CLI you need:</p>
+<ul class="simple">
+<li>RHEL 6+ or Ubuntu 14.04+</li>
+<li>OS X Darwin 10.11+ (OS X El Capitan+)</li>
+</ul>
+<p>Browser requirements, for Web UI:</p>
+<ul class="simple">
+<li>Chrome (latest)</li>
+<li>Firefox (latest)</li>
+<li>Safari (latest)</li>
+<li>Microsoft Edge (latest)</li>
+<li>Internet Explorer 11 (Compatibility Mode is not supported)</li>
+</ul>
+</div>
+<div class="section" id="installing-the-aws-commandline-tool">
+<span id="installing-the-aws-commandline-tool"></span><h3>Installing the AWS Commandline Tool<a class="headerlink" href="#installing-the-aws-commandline-tool" title="Permalink to this headline">¶</a></h3>
+<p>Here is one way to install <code class="docutils literal notranslate"><span class="pre">awscli</span></code> on the DeploymentManager machine:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># install tools and awscli</span>
+sudo yum install wget
+sudo wget https://bootstrap.pypa.io/get-pip.py
+sudo python get-pip.py
+sudo pip install awscli
+
+<span class="c1"># Configure AWS access</span>
+aws configure
+</pre></div>
+</div>
+</div>
+<div class="section" id="getting-the-bits">
+<span id="getting-the-bits"></span><h3>Getting the Bits<a class="headerlink" href="#getting-the-bits" title="Permalink to this headline">¶</a></h3>
+<p>Download and extract the DeploymentManager tarball:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Recommended location is /opt/cerebro but can be any location.</span>
+sudo mkdir -p /opt/cerebro <span class="o">&amp;&amp;</span> <span class="nb">cd</span> /opt/cerebro
+
+<span class="c1"># Update ownership of the destination directory</span>
+<span class="nb">echo</span> <span class="sb">`</span>whoami<span class="sb">`</span> <span class="p">|</span> xargs -I <span class="s1">&#39;{}&#39;</span> sudo chown -R <span class="s1">&#39;{}&#39;</span> /opt/cerebro
+
+<span class="c1"># Get the tarball from S3.</span>
+curl -O https://s3.amazonaws.com/cerebrodata-release-useast/0.7.1/deployment-manager-0.7.1.tar.gz
+
+<span class="c1"># Extract the bits.</span>
+tar xzf deployment-manager-0.7.1.tar.gz <span class="o">&amp;&amp;</span> rm deployment-manager-0.7.1.tar.gz <span class="o">&amp;&amp;</span> ln -s deployment-manager-0.7.1 deployment-manager
+</pre></div>
+</div>
+<p>Download the shell binary. This depends on the OS running the CLI.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Linux</span>
+curl -O https://s3.amazonaws.com/cerebrodata-release-useast/0.7.1/cli/linux/cerebro_cli <span class="o">&amp;&amp;</span> chmod +x cerebro_cli
+<span class="c1"># OS X</span>
+curl -O https://s3.amazonaws.com/cerebrodata-release-useast/0.7.1/cli/darwin/cerebro_cli <span class="o">&amp;&amp;</span> chmod +x cerebro_cli
+</pre></div>
+</div>
+</div>
+<div class="section" id="deploymentmanager-logging-and-install-directory">
+<span id="deploymentmanager-logging-and-install-directory"></span><h3>DeploymentManager Logging and Install Directory<a class="headerlink" href="#deploymentmanager-logging-and-install-directory" title="Permalink to this headline">¶</a></h3>
+<p>Configure the logging and local install directories. These should be paths on the local
+file system. The install directory currently needs to be restored if this machine is
+moved. These by default are <code class="docutils literal notranslate"><span class="pre">/var/log/cerebro</span></code> and <code class="docutils literal notranslate"><span class="pre">/etc/cerebro</span></code> but can be changed
+by setting <code class="docutils literal notranslate"><span class="pre">DEPLOYMENT_MANAGER_LOG_DIR</span></code> and <code class="docutils literal notranslate"><span class="pre">DEPLOYMENT_MANAGER_INSTALL_DIR</span></code> in the
+environment.</p>
+<p>For a standard install:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>sudo mkdir -p /var/log/cerebro <span class="o">&amp;&amp;</span> sudo mkdir -p /etc/cerebro <span class="o">&amp;&amp;</span> sudo chmod <span class="m">700</span> /etc/cerebro
+
+<span class="c1"># DeploymentManager user needs exclusive access to those directories. If those</span>
+<span class="c1"># directories are created as different user than the DeploymentManager user, run:</span>
+<span class="nb">echo</span> <span class="sb">`</span>whoami<span class="sb">`</span> <span class="p">|</span> xargs -I <span class="s1">&#39;{}&#39;</span> sudo chown -R <span class="s1">&#39;{}&#39;</span> /var/log/cerebro
+<span class="nb">echo</span> <span class="sb">`</span>whoami<span class="sb">`</span> <span class="p">|</span> xargs -I <span class="s1">&#39;{}&#39;</span> sudo chown -R <span class="s1">&#39;{}&#39;</span> /etc/cerebro
+</pre></div>
+</div>
+</div>
+<div class="section" id="cerebro-configuration">
+<span id="cerebro-configuration"></span><h3>Cerebro Configuration<a class="headerlink" href="#cerebro-configuration" title="Permalink to this headline">¶</a></h3>
+<p>DeploymentManager needs to be configured before it can run. These configurations are
+done via environment variables before starting up the server. It is recommended you
+copy the template configuration and update it. Steps below assume the
+standard install paths were used.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cp /opt/cerebro/deployment-manager/conf/env-template.sh /etc/cerebro/env.sh
+<span class="c1"># open and edit env.sh, modifying it as necessary</span>
+</pre></div>
+</div>
+<p>The config script from <code class="docutils literal notranslate"><span class="pre">/etc/cerebro/env.sh</span></code> will automatically be loaded when starting
+the DeploymentManager. If this is the path used, it is not necessary to source the script.</p>
+<p>NOTE:
+The environment variables set in the env.sh script are stored by the deployment manager
+when it starts up. When a deployment manager creates a Cerebro cluster, the current values
+of those environment variables are applied to the new cluster and the cluster will retain
+those values independent of any subsequent configuration changes on the deployment manager.
+To change the values used by a deployment manager, you must either update the env.sh script
+(assuming that it’s in the default location of /etc/cerebro/) or update your environment
+variables. Then, restart the deployment manager by running:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>/opt/cerebro/deployment-manager/bin/deployment-manager
+</pre></div>
+</div>
+<p>Clusters created after the deployment manager is restarted will use the new
+configuration values.</p>
+<p>An existing Cerebro cluster that is restarted via a deployment manager will not pick up
+any changes in the deployment manager’s configuration. Rather, the Cerebro cluster
+will retain the configuration values that were used during that cluster’s creation.</p>
+<p><strong>CEREBRO_S3_STAGING_DIR</strong>
+This is the <code class="docutils literal notranslate"><span class="pre">CEREBRO_S3_STAGING_DIR</span></code> for logs and install files. It can be anywhere in
+s3 that makes sense for your organization. Cerebro will create a number of subdirectories
+it requires here.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example:</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_S3_STAGING_DIR</span><span class="o">=</span>s3://&lt;your cerebro dir&gt;
+</pre></div>
+</div>
+<p><strong>CEREBRO_DB_URL/CEREBRO_DB_USERNAME/CEREBRO_DB_PASSWORD</strong>
+This is the end point and database credentials for <code class="docutils literal notranslate"><span class="pre">CEREBRO_DB_URL</span></code>. <code class="docutils literal notranslate"><span class="pre">DB_URL</span></code> should be
+the host/port (typically 3306) of the running mysql instance.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example:</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_DB_URL</span><span class="o">=</span>cerebro.xyzzzz.rds.amazonaws.com:3306
+</pre></div>
+</div>
+<p><strong>CEREBRO_DB_NAME</strong>
+This is the DB name inside the <code class="docutils literal notranslate"><span class="pre">CEREBRO_DB_URL</span></code> that the DeploymentManager will use. If
+this RDS instance is only backing a single DeploymentManager install, this does not need
+to be set. Otherwise, each install can have a different database. This does not need to
+be pre-created.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example:</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_DB_NAME</span><span class="o">=</span>cerebro
+</pre></div>
+</div>
+<p><strong>CEREBRO_CATALOG_ADMINS</strong>
+CDAS clusters will, by default, start up with one user which has admin on the system.
+The admin users can create and manage roles, grant roles to other users and read all
+datasets. This default admin user depends on which authentication mechanism was chosen:</p>
+<ul class="simple">
+<li>Kerberos: The admin user is the first part of the kerberos principal</li>
+<li>JWT: The admin user is the subject in the <code class="docutils literal notranslate"><span class="pre">CEREBRO_SYSTEM_TOKEN</span></code></li>
+<li>Unauthenticated: The admin user is ‘root’.</li>
+</ul>
+<p>To specify other admin users, specify the comma-separated list of admins and/or groups.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example:</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_CATALOG_ADMINS</span><span class="o">=</span>admin,username1,admin-group
+</pre></div>
+</div>
+<p>Admins users can grant permissions to other users/groups including the ability to grant
+to other users. However, <em>only</em> admin users can create new roles.</p>
+<p><strong>CEREBRO_SERVER_HOSTPORT</strong>
+This is the host:port to run the DeploymentManager. By default it listens to all
+interfaces and runs on port 8085 (e.g. <code class="docutils literal notranslate"><span class="pre">0.0.0.0:8085</span></code>). This port does not need to be
+accessible to the typical user to access data but is required the administer Cerebro
+clusters.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example:</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_SERVER_HOSTPORT</span><span class="o">=</span><span class="m">0</span>.0.0.0:8085
+</pre></div>
+</div>
+<p><strong>CEREBRO_PORT_CONFIGURATION</strong>
+This configuration allows specifying the ports to run the cluster services on. These
+ports do need to be available for all the users connecting to Cerebro for metadata and
+data. This is a comma-separated list of <code class="docutils literal notranslate"><span class="pre">service:portname:port</span> <span class="pre">number</span></code>. Below are the
+ports that are required for clients. If they are not specified, Cerebro will pick
+randomly available ports to expose these services on.</p>
+<ul class="simple">
+<li>cdas_rest_server:api</li>
+<li>cerebro_catalog:hms</li>
+<li>cerebro_catalog:sentry</li>
+<li>cerebro_planner:planner</li>
+<li>cerebro_planner:webui</li>
+<li>cerebro_web:webui</li>
+<li>cerebro_worker:worker</li>
+<li>kubernetes_dashboard:admin_ui</li>
+</ul>
+<p>An example configuration would be:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nv">CEREBRO_PORT_CONFIGURATION</span><span class="o">=</span><span class="s2">&quot;cerebro_worker:worker:7185,cerebro_catalog:sentry:7182&quot;</span>
+<span class="nv">CEREBRO_PORT_CONFIGURATION</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CEREBRO_PORT_CONFIGURATION</span><span class="s2">,cdas_rest_server:api:7184&quot;</span>
+<span class="nv">CEREBRO_PORT_CONFIGURATION</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CEREBRO_PORT_CONFIGURATION</span><span class="s2">,cerebro_planner:planner:7183&quot;</span>
+<span class="nv">CEREBRO_PORT_CONFIGURATION</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CEREBRO_PORT_CONFIGURATION</span><span class="s2">,cerebro_planner:webui:7181&quot;</span>
+<span class="nv">CEREBRO_PORT_CONFIGURATION</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CEREBRO_PORT_CONFIGURATION</span><span class="s2">,cerebro_catalog:hms:7180&quot;</span>
+<span class="nv">CEREBRO_PORT_CONFIGURATION</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CEREBRO_PORT_CONFIGURATION</span><span class="s2">,cerebro_web:webui:7186&quot;</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_PORT_CONFIGURATION</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CEREBRO_PORT_CONFIGURATION</span><span class="s2">,kubernetes_dashboard:admin_ui:7350&quot;</span>
+</pre></div>
+</div>
+<p><strong>KERBEROS</strong>
+To enable Kerberos, specify these configs:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">CEREBRO_KERBEROS_PRINCIPAL</span></code>: principal for non-REST Cerebro services.</li>
+<li><code class="docutils literal notranslate"><span class="pre">CEREBRO_KERBEROS_HTTP_PRINCIPAL</span></code>: principal for REST services, this by convention
+should start with <code class="docutils literal notranslate"><span class="pre">HTTP/</span></code> and we highly recommend this for compatibility with exiting
+tools.</li>
+<li><code class="docutils literal notranslate"><span class="pre">CEREBRO_KERBEROS_KEYTAB_FILE</span></code>: Path to keytab file containing both principals. This
+path needs to be accessible from the DeploymentManager but can be on the local machine
+or in S3.</li>
+<li><code class="docutils literal notranslate"><span class="pre">CEREBRO_KERBEROS_ENABLED_REALMS</span></code>: List of comma-separated cross realms to accept
+connections from. This does not need to be specified if only connections from the
+<code class="docutils literal notranslate"><span class="pre">CEREBRO_KERBEROS_PRINCIPAL</span></code> realm is allowed to connect.</li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example:</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_KERBEROS_PRINCIPAL</span><span class="o">=</span><span class="s2">&quot;cerebro/cname.example.com@REALM.com&quot;</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_KERBEROS_HTTP_PRINCIPAL</span><span class="o">=</span><span class="s2">&quot;HTTP/cname.example.com@REALM.com&quot;</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_KERBEROS_KEYTAB_FILE</span><span class="o">=</span><span class="s2">&quot;/etc/cerebro.keytab&quot;</span>
+</pre></div>
+</div>
+<p>For more information on how to set up a kerberized cluster, see:</p>
+<ul class="simple">
+<li><a class="reference external" href="KerberosClusterSetup.md">Kerberos Cluster Setup</a></li>
+</ul>
+<p><strong>JSON Web Token</strong>
+To enable authentication using JSON Web Tokens (JWT), specify these configs:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">CEREBRO_JWT_PUBLIC_KEY</span></code>: Path to the public key to decrypt tokens. Must be accessible
+on the DeploymentManager machine but can be on the local machine or in S3.</li>
+<li><code class="docutils literal notranslate"><span class="pre">CEREBRO_JWT_ALGORITHM</span></code>: Algorithm to use to decrypt tokens. This currently must be
+“RSA256” or “RSA512”</li>
+<li><code class="docutils literal notranslate"><span class="pre">CEREBRO_JWT_AUTHENTICATION_SERVER_URL</span></code>: URL that will authenticate JWT tokens.
+We will issue a POST call to this URL, specifying the token to authenticate. This cannot
+be set if <code class="docutils literal notranslate"><span class="pre">CEREBRO_JWT_PUBLIC_KEY</span></code> is set.</li>
+<li><code class="docutils literal notranslate"><span class="pre">CEREBRO_SYSTEM_TOKEN</span></code>: Path to a file that just contains the token (on a single line)
+that Cerebro services will use to authenticate itself. The subject for this token acts
+as the Cerebro system user.</li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example:</span>
+
+<span class="c1"># Either these two</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_JWT_PUBLIC_KEY</span><span class="o">=</span><span class="s2">&quot;/etc/jwt.512.pub&quot;</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_JWT_ALGORITHM</span><span class="o">=</span><span class="s2">&quot;RSA512&quot;</span>
+<span class="c1"># OR</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_JWT_AUTHENTICATION_SERVER_URL</span><span class="o">=</span><span class="s2">&quot;http://sso/verify-token&quot;</span>
+
+<span class="nb">export</span> <span class="nv">CEREBRO_SYSTEM_TOKEN</span><span class="o">=</span><span class="s2">&quot;/etc/cerebro.token&quot;</span>
+</pre></div>
+</div>
+<p><strong>HTTPS</strong>
+To enable HTTPS, specify the SSL certificate and private key that Cerebro should use.
+Setting these, enables HTTPS on the REST server and web ui.</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">CEREBRO_SSL_CERTIFICATE_FILE</span></code>: Path to the certificate file.</li>
+<li><code class="docutils literal notranslate"><span class="pre">CEREBRO_SSL_KEY_FILE</span></code>: Path to the file with the private key.</li>
+<li><code class="docutils literal notranslate"><span class="pre">CEREBRO_SSL_FQDN</span></code>: [Optional] Fully qualified domain name for the cluster. If set,
+this must be a valid ‘Subject Alternate Name’ in the certificate. This can be the FQDN
+for any node in this cluster (typically the CNAME for the REST service). This is required
+for some clients (e.g. newer versions of chrome) which do not allow IP addresses if SSL
+is enabled.</li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example:</span>
+<span class="nb">export</span> <span class="nv">CEREBRO_SSL_CERTIFICATE_FILE</span><span class="o">=</span>/etc/cerebro.cert
+<span class="nb">export</span> <span class="nv">CEREBRO_SSL_KEY_FILE</span><span class="o">=</span>/etc/cerebro.key
+<span class="nb">export</span> <span class="nv">CEREBRO_SSL_FQDN</span><span class="o">=</span>rest-server.cerebro.com
+</pre></div>
+</div>
+<p><strong>LDAP</strong>
+For information on how to set LDAP Basic Auth related environment variables, see:</p>
+<ul class="simple">
+<li><a class="reference external" href="LdapAuthentication.md#setting-up-ldap-related-configurations">LDAP Basic Auth</a></li>
+</ul>
+<p>For more details on interactions with authenticated Cerebro, see:</p>
+<ul class="simple">
+<li><a class="reference external" href="Authentication.md">Authentication</a></li>
+<li><a class="reference external" href="Security.md">Security</a></li>
+</ul>
+<p><strong>OAuth</strong>
+Cerebro can be deployed with OAuth enabled for easier Web UI login. For more information,
+see:</p>
+<ul class="simple">
+<li><a class="reference external" href="OAuthGuide.md">OAuth Guide</a></li>
+</ul>
+</div>
+<div class="section" id="starting-the-deploymentmanager">
+<span id="starting-the-deploymentmanager"></span><h3>Starting the DeploymentManager<a class="headerlink" href="#starting-the-deploymentmanager" title="Permalink to this headline">¶</a></h3>
+<p>After setting those environment variables and sourcing them, simply run:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>/opt/cerebro/deployment-manager/bin/deployment-manager
+<span class="c1"># This should output &#39;System up and running&#39; and the server hostport.</span>
+</pre></div>
+</div>
+<p>This step is not expected to take more than 30 seconds and usually indicates a
+configuration issue if the DeploymentManager does not come up in time. The
+DeploymentManager runs as a daemon and the logs can be viewed with:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>less /var/log/cerebro/deployment-manager.log
+</pre></div>
+</div>
+<p>If there are configuration issues, they should be available at the end of the log.</p>
+</div>
+<div class="section" id="configuring-the-cli">
+<span id="configuring-the-cli"></span><h3>Configuring the CLI<a class="headerlink" href="#configuring-the-cli" title="Permalink to this headline">¶</a></h3>
+<p>With the DeploymentManager running, we can configure the CLI to connect with it. Run</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>&lt;path to&gt;/cerebro_cli configure --server &lt;host:port of DeploymentManager&gt;
+&lt;path to&gt;/cerebro_cli status
+<span class="c1"># Should return &#39;Service available. Status: Running&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="starting-up-a-cdas-cluster">
+<span id="starting-up-a-cdas-cluster"></span><h2>Starting up a CDAS Cluster.<a class="headerlink" href="#starting-up-a-cdas-cluster" title="Permalink to this headline">¶</a></h2>
+<p>With the DeploymentManager running, we can now start up CDAS clusters.</p>
+<div class="section" id="configure-machine-settings">
+<span id="configure-machine-settings"></span><h3>Configure Machine Settings<a class="headerlink" href="#configure-machine-settings" title="Permalink to this headline">¶</a></h3>
+<p>Cluster launch is broken up into two parts:</p>
+<ul class="simple">
+<li>Actions that need to happen on the DeploymentManager. This is referred to as the
+<em>launch-script</em>.</li>
+<li>Actions that need to happen on each EC2 machine that is launched. These are referred
+to as the <em>init-scripts</em>.</li>
+</ul>
+<p>The launch-script is required and when called, should provision a new EC2 instance.
+This will be run from the DeploymentManager machine. This script should launch the
+machine with all the required EC2 configurations described for the ‘Cluster machine’ in
+the prerequisites (e.g. VPC, security groups, IAM Roles, etc). It is also the best place
+to tag machines or do any other setup as your organization requires.</p>
+<p>The init scripts is an optional list of scripts that will be run when the instance is
+launched on the instance machine. This could, for example, install any monitoring
+software you already use, configure the machine to custom package repo locations, etc.</p>
+<p>We have provided a template launch script in
+<code class="docutils literal notranslate"><span class="pre">/opt/cerebro/deployment-manager/bin/start-ec2-machine-example.sh</span></code>. It is recommended you
+copy this and adapt it to your organization’s requirements. The user-configurable values are
+at the top of the file, marked with “USER” in a comment. At a minimum, a subnet ID and security
+group ID must be added to the script.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cp  /opt/cerebro/deployment-manager/bin/start-ec2-machine-example.sh /etc/cerebro/launch-ec2.sh
+</pre></div>
+</div>
+<p>To verify the launch script, we recommend running it with no arguments from the
+DeploymentManager machine as the same user as the DeploymentManager, with identical
+proxy settings (if any) and identical AWS settings. The script should run successfully
+with no arguments and it should output the instance-id and ip addresses of the newly
+launched instance.</p>
+<p>Launch script validation was recently added to CDAS. This requires that launch scripts
+support a “–dryrun” flag and exit with a status of zero when invoked  with that flag.
+As example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ /etc/cerebro/launch-ec2.sh --dryrun
+Dry run succeeded
+$ echo $?
+0
+</pre></div>
+</div>
+<p>The “Dry run succeeded” line is not required.</p>
+<p>When a launch script is invoked without the “–dryrun” flag, it is expected to
+return a string of the form: <code class="docutils literal notranslate"><span class="pre">&lt;instance</span> <span class="pre">id&gt;,&lt;public</span> <span class="pre">ip&gt;,&lt;private</span> <span class="pre">ip&gt;</span></code>
+NOTE: the public ip value is optional. If your setup does not use it, simply output
+<code class="docutils literal notranslate"><span class="pre">&lt;instance</span> <span class="pre">id&gt;,,&lt;private</span> <span class="pre">ip&gt;</span></code></p>
+<p>With the script built, you can start a cluster from the CLI. We will first create an
+environment. An environment captures all the configurations required to launch clusters.
+Examples of environments might be ‘dev’ or ‘prod’.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cerebro_cli environments create --name<span class="o">=</span>&lt;Name&gt; --provider<span class="o">=</span>AWS --launchScript<span class="o">=</span>&lt;Absolute path on DeploymentManager machine&gt; --initScripts<span class="o">=</span>&lt;Comma separated list of init scripts&gt;
+<span class="c1"># Example:</span>
+./cerebro_cli environments create --name<span class="o">=</span>DevEnv --provider<span class="o">=</span>AWS --launchScript<span class="o">=</span>/etc/cerebro/launch-ec2.sh
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-a-cluster">
+<span id="creating-a-cluster"></span><h3>Creating a Cluster<a class="headerlink" href="#creating-a-cluster" title="Permalink to this headline">¶</a></h3>
+<p>With the environment created, the next step is to create a cluster in that environment.
+Multiple clusters can be created with the same environment.</p>
+<blockquote>
+<div><strong>Note:</strong> See <a class="reference external" href="ClusterTypes.md">Cluster Types</a> for the available option when using
+the <code class="docutils literal notranslate"><span class="pre">--type</span></code> parameter.</div></blockquote>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cerebro_cli clusters create --name<span class="o">=</span>&lt;Name&gt; --numNodes<span class="o">=</span>&lt;Number of nodes&gt; --type<span class="o">=</span>STANDALONE_CLUSTER --environmentid<span class="o">=</span>&lt;ID from environments create&gt;
+Example:
+./cerebro_cli clusters create --name<span class="o">=</span>fintech_prod --numNodes<span class="o">=</span><span class="m">1</span> --type<span class="o">=</span>STANDALONE_CLUSTER --environmentid<span class="o">=</span><span class="m">1</span>
+
+<span class="c1"># List the running clusters. The newly created cluster should be visible.</span>
+cerebro_cli clusters list
+
+<span class="c1"># This should show the cluster as &#39;Provisioning&#39;. You can see more details, including</span>
+<span class="c1"># how long it has been in this state using the cerebro_cli. This assumes the cluster</span>
+<span class="c1"># as id &#39;1&#39;.</span>
+<span class="c1"># If not, get the id from &#39;clusters list&#39;.</span>
+cerebro_cli clusters status --detail <span class="m">1</span>
+
+<span class="c1"># It might be convenient to run this with &#39;watch&#39; until the state transitions to</span>
+<span class="c1"># &#39;READY&#39;.</span>
+<span class="c1"># This step will take a few minutes to provision the machines, install CDAS and start</span>
+<span class="c1"># up all the services.</span>
+watch cerebro_cli clusters status <span class="m">1</span>
+
+<span class="c1"># At this point all of Cerebro is up and running. To see the externally configured</span>
+<span class="c1"># end points, run</span>
+cerebro_cli clusters endpoints <span class="m">1</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="restarting-failed-cluster-after-addressing-issues">
+<span id="restarting-failed-cluster-after-addressing-issues"></span><h3>Restarting Failed Cluster after Addressing Issues<a class="headerlink" href="#restarting-failed-cluster-after-addressing-issues" title="Permalink to this headline">¶</a></h3>
+<p>When a Cerebro environment is created, the launch, init scripts and config files for that
+environment are copied to the Cerebro install directory. This is to ensure that the
+clusters using that environment are unaffected by any new environments or clusters with
+different configurations.</p>
+<p>If the script or config files in the environment have any errors, then those need to be
+corrected and the affected clusters restarted. These include <code class="docutils literal notranslate"><span class="pre">launch-ec2.sh</span></code> and any
+init scripts.</p>
+<p>The Cerebro install scripts and config files are located at the
+<code class="docutils literal notranslate"><span class="pre">$DEPLOYMENT_MANAGER_INSTALL_DIR/env/&lt;environmentid&gt;</span></code> directory. The
+<code class="docutils literal notranslate"><span class="pre">DEPLOYMENT_MANAGER_INSTALL_DIR</span></code> environment variable defaults to <code class="docutils literal notranslate"><span class="pre">/etc/cerebro</span></code>.</p>
+</div>
+<div class="section" id="starting-multiple-cdas-catalogs-sharing-the-same-metadata">
+<span id="starting-multiple-cdas-catalogs-sharing-the-same-metadata"></span><h3>Starting Multiple CDAS Catalogs Sharing the Same Metadata<a class="headerlink" href="#starting-multiple-cdas-catalogs-sharing-the-same-metadata" title="Permalink to this headline">¶</a></h3>
+<p>Cerebro catalogs can be configured to share the same underlying metadata. This feature
+is supported for “active-passive” configurations. In this case when creating the multiple
+clusters, supply the catalogDbNamePrefix argument. Catalogs which share the same name
+will share the same metadata. For example, to create two clusters that share metadata:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>./cerebro_cli clusters create --name<span class="o">=</span>prod --numNodes<span class="o">=</span><span class="m">1</span> --type<span class="o">=</span>STANDALONE_CLUSTER --environmentid<span class="o">=</span><span class="m">1</span> --catalogDbNamePrefix<span class="o">=</span>metadata
+./cerebro_cli clusters create --name<span class="o">=</span>prod-backup --numNodes<span class="o">=</span><span class="m">1</span> --type<span class="o">=</span>STANDALONE_CLUSTER --environmentid<span class="o">=</span><span class="m">1</span> --catalogDbNamePrefix<span class="o">=</span>metadata
+</pre></div>
+</div>
+<p>NOTE: If the <code class="docutils literal notranslate"><span class="pre">--catalogDbNamePrefix</span></code> was not explicitly specified on cluster creation,
+then it is the name of the cluster.</p>
+</div>
+</div>
+<div class="section" id="cerebro-upgrade">
+<span id="cerebro-upgrade"></span><h2>Cerebro Upgrade<a class="headerlink" href="#cerebro-upgrade" title="Permalink to this headline">¶</a></h2>
+<p>Starting with 0.4.0, Cerebro upgrades to newer CDAS versions and patches can be applied
+using the <code class="docutils literal notranslate"><span class="pre">cerebro_cli</span></code> command.</p>
+<p>See <a class="reference external" href="ClusterAdmin.md">Cluster Administration</a> for further details.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Cerebro Install</a><ul>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a><ul>
+<li><a class="reference internal" href="#aws-prerequisites">AWS Prerequisites</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#installing-the-deploymentmanager">Installing the DeploymentManager</a><ul>
+<li><a class="reference internal" href="#machine-and-package-prerequisites">Machine and Package Prerequisites</a></li>
+<li><a class="reference internal" href="#installing-the-aws-commandline-tool">Installing the AWS Commandline Tool</a></li>
+<li><a class="reference internal" href="#getting-the-bits">Getting the Bits</a></li>
+<li><a class="reference internal" href="#deploymentmanager-logging-and-install-directory">DeploymentManager Logging and Install Directory</a></li>
+<li><a class="reference internal" href="#cerebro-configuration">Cerebro Configuration</a></li>
+<li><a class="reference internal" href="#starting-the-deploymentmanager">Starting the DeploymentManager</a></li>
+<li><a class="reference internal" href="#configuring-the-cli">Configuring the CLI</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#starting-up-a-cdas-cluster">Starting up a CDAS Cluster.</a><ul>
+<li><a class="reference internal" href="#configure-machine-settings">Configure Machine Settings</a></li>
+<li><a class="reference internal" href="#creating-a-cluster">Creating a Cluster</a></li>
+<li><a class="reference internal" href="#restarting-failed-cluster-after-addressing-issues">Restarting Failed Cluster after Addressing Issues</a></li>
+<li><a class="reference internal" href="#starting-multiple-cdas-catalogs-sharing-the-same-metadata">Starting Multiple CDAS Catalogs Sharing the Same Metadata</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#cerebro-upgrade">Cerebro Upgrade</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/external-docs/docs/Install.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, azzy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../../_sources/external-docs/docs/Install.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

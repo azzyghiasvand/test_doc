@@ -1,0 +1,184 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cerebro Client Configurations &#8212; Cerebro Data 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cerebro-client-configurations">
+<span id="cerebro-client-configurations"></span><h1>Cerebro Client Configurations<a class="headerlink" href="#cerebro-client-configurations" title="Permalink to this headline">¶</a></h1>
+<p>This document describes configurations available to the client for Hadoop ecosystem tools.</p>
+<p>Note: when the configs are set in spark, they are prefixed with <code class="docutils literal notranslate"><span class="pre">spark.</span></code>. For example,
+the config <code class="docutils literal notranslate"><span class="pre">recordservice.kerberos.principal</span></code>, when configured for spark, should
+be <code class="docutils literal notranslate"><span class="pre">spark.recordservice.kerberos.principal</span></code>. This is true for all configs.</p>
+<div class="section" id="specifying-configs">
+<span id="specifying-configs"></span><h2>Specifying configs<a class="headerlink" href="#specifying-configs" title="Permalink to this headline">¶</a></h2>
+<p>How configs are specified depends on the tool being used and uses the tool’s standard
+configuration mechanisms.</p>
+<div class="section" id="spark">
+<span id="spark"></span><h3>Spark<a class="headerlink" href="#spark" title="Permalink to this headline">¶</a></h3>
+<p>Configs can be specified:</p>
+<ul class="simple">
+<li>via the commandline to spark-submit/spark-shell with –conf</li>
+<li>set in spark-defaults, typically in /etc/spark-defaults.conf</li>
+<li>can be set in the application, via the SparkContext (or related) objects</li>
+</ul>
+</div>
+<div class="section" id="hive">
+<span id="hive"></span><h3>Hive<a class="headerlink" href="#hive" title="Permalink to this headline">¶</a></h3>
+<p>Configs can be specified:</p>
+<ul class="simple">
+<li>via the commandline to beeline with –hiveconf</li>
+<li>set on the class path in either hive-site.xml or core-site.xml</li>
+<li>set in the beeline session using the <code class="docutils literal notranslate"><span class="pre">SET</span></code> command</li>
+</ul>
+</div>
+</div>
+<div class="section" id="required-configs">
+<span id="required-configs"></span><h2>Required configs<a class="headerlink" href="#required-configs" title="Permalink to this headline">¶</a></h2>
+<p><strong>recordservice.planner.hostports</strong></p>
+<p>This is always required and is a comma separated list of host:ports where the CDAS
+planners are running.</p>
+</div>
+<div class="section" id="authentication-configs">
+<span id="authentication-configs"></span><h2>Authentication configs<a class="headerlink" href="#authentication-configs" title="Permalink to this headline">¶</a></h2>
+<p><strong>recordservice.kerberos.principal</strong></p>
+<p>This is the principal of the planner service to connect to. This is a 3 part
+principal: <code class="docutils literal notranslate"><span class="pre">SERVICE_NAME/SERVICE_HOST&#64;REALM</span></code>, for example,
+<code class="docutils literal notranslate"><span class="pre">cerebro/planner.cerebro.com&#64;CEREBRO.COM</span></code>. This is required if the client is
+authenticating with CDAS using kerberos.</p>
+<p><strong>recordservice.delegation-token.token</strong></p>
+<p>This is the token string for this user. CDAS can be configured to accept multiple kinds
+of tokens but it is the same config for clients.</p>
+<p><strong>recordservice.delegation-token.service-name</strong></p>
+<p>This is only required for versions &lt; 0.4.5 and should <em>not</em> be set on newer versions.
+This must be set if token based auth is being used and should match the SERVICE_NAME
+portion of the planner principal. In the above example, this value would be <code class="docutils literal notranslate"><span class="pre">cerebro</span></code>.</p>
+<p>Note: If both the token and principal is specified, the client will only authenticate
+using the token.</p>
+</div>
+<div class="section" id="network-related-configs">
+<span id="network-related-configs"></span><h2>Network related configs<a class="headerlink" href="#network-related-configs" title="Permalink to this headline">¶</a></h2>
+<p>These configs are often not required and the defaults should suffice. These can be
+adjusted if the the client observes timeout behavior.</p>
+<p><strong>recordservice.planner.retry.attempts</strong></p>
+<p>Optional configuration for the maximum number of attempts to retry RPCs with planner.</p>
+<p><strong>recordservice.worker.retry.attempts</strong></p>
+<p>Optional configuration for the maximum number of attempts to retry RPCs with worker.</p>
+<p><strong>recordservice.planner.retry.sleepMs</strong></p>
+<p>Optional configuration for sleep between retry attempts with planner.</p>
+<p><strong>recordservice.worker.retry.sleepMs</strong></p>
+<p>Optional configuration for sleep between retry attempts with worker.</p>
+<p><strong>recordservice.planner.connection.timeoutMs</strong></p>
+<p>Optional configuration for timeout when initially connecting to the planner service.</p>
+<p><strong>recordservice.worker.connection.timeoutMs</strong></p>
+<p>Optional configuration for timeout when initially connecting to the worker service.</p>
+<p><strong>recordservice.planner.rpc.timeoutMs</strong></p>
+<p>Optional configuration for timeout for planner RPCs (after connection is established).</p>
+<p><strong>recordservice.worker.rpc.timeoutMs</strong></p>
+<p>Optional configuration for timeout for worker RPCs (after connection ie established).</p>
+</div>
+<div class="section" id="performance-related-configs">
+<span id="performance-related-configs"></span><h2>Performance related configs<a class="headerlink" href="#performance-related-configs" title="Permalink to this headline">¶</a></h2>
+<p>These settings can fine tune the performance behavior. It is generally not needed to set
+these as the server will compute a good value automatically.</p>
+<p><strong>recordservice.task.fetch.size</strong></p>
+<p>Optional configuration option for performance tuning that configures the max number of
+records returned when fetching results from the workers.</p>
+<p><strong>recordservice.task.plan.maxTasks</strong></p>
+<p>Optional configuration for the hinted maximum number of tasks to generate per PlanRequest.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Cerebro Client Configurations</a><ul>
+<li><a class="reference internal" href="#specifying-configs">Specifying configs</a><ul>
+<li><a class="reference internal" href="#spark">Spark</a></li>
+<li><a class="reference internal" href="#hive">Hive</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#required-configs">Required configs</a></li>
+<li><a class="reference internal" href="#authentication-configs">Authentication configs</a></li>
+<li><a class="reference internal" href="#network-related-configs">Network related configs</a></li>
+<li><a class="reference internal" href="#performance-related-configs">Performance related configs</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ClientConfigurations.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, azzy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/ClientConfigurations.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

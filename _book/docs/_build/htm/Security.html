@@ -1,0 +1,283 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Secure DeploymentManager REST API Access &#8212; cerebro data pre-release  documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="secure-deploymentmanager-rest-api-access">
+<span id="secure-deploymentmanager-rest-api-access"></span><h1>Secure DeploymentManager REST API Access<a class="headerlink" href="#secure-deploymentmanager-rest-api-access" title="Permalink to this headline">¶</a></h1>
+<p>This document explains how to enable Kerberos-based authentication and admin rights
+authorization for the DeploymentManager REST APIs.</p>
+<div class="section" id="kerberos-authentication">
+<span id="kerberos-authentication"></span><h2>Kerberos Authentication<a class="headerlink" href="#kerberos-authentication" title="Permalink to this headline">¶</a></h2>
+<p>In this section, we will cover:</p>
+<ul class="simple">
+<li><a class="reference external" href="#prerequisites-to-enable-kerberos-on-the-deploymentmanager">Prerequisites to enable Kerberos on the DeploymentManager REST API server</a></li>
+<li><a class="reference external" href="#setting-up-the-required-configurations">Setting up the required configurations</a></li>
+<li><a class="reference external" href="#verifying-kerberos-authentication-using-curl">Verify Kerberos authentication using curl</a></li>
+</ul>
+<div class="section" id="prerequisites-to-enable-kerberos-on-the-deploymentmanager">
+<span id="prerequisites-to-enable-kerberos-on-the-deploymentmanager"></span><h3>Prerequisites to enable Kerberos on the DeploymentManager<a class="headerlink" href="#prerequisites-to-enable-kerberos-on-the-deploymentmanager" title="Permalink to this headline">¶</a></h3>
+<p>Before we begin this section, make sure that your organization has a KDC configured and
+available as you will need to configure your SNP or <em>ServiceNamePrincipal</em> with the KDC.</p>
+<p><strong>SNP:</strong> The ServiceNamePrincipal is divided into three parts, explained below, in the
+format of <code class="docutils literal notranslate"><span class="pre">primary/instance&#64;&lt;KDC_REALM&gt;</span></code>:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">primary</span></code> - This is typically HTTP.</li>
+<li><code class="docutils literal notranslate"><span class="pre">instance</span></code> - Hostname for the DM REST API Server.</li>
+<li><code class="docutils literal notranslate"><span class="pre">KDC_REALM</span></code> - The Kerberos realm. This is generally in upper-case letters.</li>
+</ul>
+<div class="section" id="setting-up-the-required-configurations">
+<span id="setting-up-the-required-configurations"></span><h4>Setting up the required configurations<a class="headerlink" href="#setting-up-the-required-configurations" title="Permalink to this headline">¶</a></h4>
+<p>To enable Kerberos on the DeploymentManager REST API Server, set the following two
+environment variables:</p>
+<ul class="simple">
+<li><strong>DM_PRINCIPAL</strong> - The SNP goes here. For example, if your DeploymentManager is
+hosted at <code class="docutils literal notranslate"><span class="pre">http://hostname:8085</span></code><ul>
+<li>DM_PRINCIPAL should be <code class="docutils literal notranslate"><span class="pre">HTTP/hostname&#64;&lt;KDC_REALM&gt;</span></code></li>
+<li><em>Please ensure</em> that the DM_PRINCIPAL is a 3-part Kerberos Principal and has the 3
+components: primary, instance and KDC_REALM.</li>
+</ul>
+</li>
+<li><strong>DM_KEYTAB_FILE</strong> - The absolute path to the Keytab file corresponding to the SNP
+and DM_PRINCIPAL specified above.</li>
+</ul>
+<p>Both of these environment variables must be properly configured to enable Kerberos for
+your DeploymentManager REST API Server. In case the keytab file specified is not present
+at the location, or only one of the configurations is present, an appropriate error
+message will be returned.</p>
+<p>In order to run the DeploymentManager with Kerberos authentication disabled, make sure
+neither of these variables are set before starting the DeploymentManager.</p>
+<p>In addition, make sure <strong>/etc/krb5.conf</strong> has the correct <code class="docutils literal notranslate"><span class="pre">default_realm</span></code> and <code class="docutils literal notranslate"><span class="pre">realm</span></code>
+information.</p>
+</div>
+<div class="section" id="verifying-kerberos-state-at-startup">
+<span id="verifying-kerberos-state-at-startup"></span><h4>Verifying Kerberos state at startup<a class="headerlink" href="#verifying-kerberos-state-at-startup" title="Permalink to this headline">¶</a></h4>
+<p>When you start the DeploymentManager with Kerberos enabled, you should see the following
+line in the logs:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Deployment</span> <span class="n">Manager</span> <span class="n">REST</span> <span class="n">API</span> <span class="n">Server</span> <span class="n">running</span> <span class="k">with</span> <span class="n">Kerberos</span> <span class="n">enabled</span>
+</pre></div>
+</div>
+<p>When you start the DeploymentManager with Kerberos disabled, you should see the following
+line in the logs:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Deployment</span> <span class="n">Manager</span> <span class="n">REST</span> <span class="n">API</span> <span class="n">Server</span> <span class="n">running</span> <span class="k">with</span> <span class="n">Kerberos</span> <span class="n">disabled</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="verifying-kerberos-authentication-using-curl">
+<span id="verifying-kerberos-authentication-using-curl"></span><h3>Verifying Kerberos authentication using curl<a class="headerlink" href="#verifying-kerberos-authentication-using-curl" title="Permalink to this headline">¶</a></h3>
+<p>Once you have the DeploymentManager running with Kerberos, follow the steps below to
+verify Kerberos authentication:</p>
+<ul>
+<li><p class="first"><strong>Obtain a TGT:</strong></p>
+<p>Make sure you have a valid TGT or <em>ticket-granting ticket</em> for the client principal
+you intend to use for authentication. The way to do this is using the <code class="docutils literal notranslate"><span class="pre">kinit</span></code> command.
+For example, for the client principal <code class="docutils literal notranslate"><span class="pre">john&#64;&lt;KDC_REALM&gt;</span></code> that you intend to use for
+authentication, do the following:</p>
+<p><strong>If you know the password for the principal, the command is:</strong></p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ kinit &lt;principal_name&gt;
+</pre></div>
+</div>
+<p><em>Example</em>:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ kinit john
+</pre></div>
+</div>
+<p><strong>If you have the keytab for the principal, the command is:</strong></p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ kinit -kt &lt;path_to_keytab&gt; &lt;principal_name&gt;
+</pre></div>
+</div>
+<p><em>Example</em>:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ kinit -kt /Users/john/john.keytab john
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>Run curl commands:</strong></p>
+<p>The following curl command should return the client name:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl --negotiate -u : &lt;HOSTNAME&gt;:&lt;PORT&gt;/api/kerberos/client
+</pre></div>
+</div>
+<p><em>Example</em></p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl --negotiate -u : hostname:8085/api/kerberos/client
+
+Authenticated client name is: john
+</pre></div>
+</div>
+<p>If the output is the client name expected, Kerberos authentication setup for
+DeploymentManager REST API Server is now complete.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="dm-administrator-authorization">
+<span id="dm-administrator-authorization"></span><h2>DM Administrator authorization<a class="headerlink" href="#dm-administrator-authorization" title="Permalink to this headline">¶</a></h2>
+<p>Currently the DeploymentManager REST API Server supports an administrator role. In this
+section we will cover the following:</p>
+<ul class="simple">
+<li><a class="reference external" href="#setting-up-users-and-groups-with-administrator-privileges">Setting up users and groups with administrator privileges</a></li>
+<li><a class="reference external" href="#verifying-admin-authorization-using-curl">Verifying administrator authorization using curl</a></li>
+<li><a class="reference external" href="#authorization-of-authenticated-vs-unauthenticated-clients">Authorization of authenticated vs unauthenticated clients</a></li>
+</ul>
+<div class="section" id="setting-up-users-and-groups-with-administrator-privileges">
+<span id="setting-up-users-and-groups-with-administrator-privileges"></span><h3>Setting up users and groups with administrator privileges<a class="headerlink" href="#setting-up-users-and-groups-with-administrator-privileges" title="Permalink to this headline">¶</a></h3>
+<p>The DeploymentManager requires the following environment variable to be set, in order to
+enable Administrator authorization on the DeploymentManager REST API server:</p>
+<ul class="simple">
+<li><strong>DM_ADMIN_USERS</strong> - The names of all individual users and Unix groups that have
+administrator privileges to the DeploymentManager go here as a CSV. For example, if the
+user <em>john</em> is an admin, and all users in the group <em>sysadmins</em> are admins, the following
+value should be set: <code class="docutils literal notranslate"><span class="pre">john,sysadmins</span></code></li>
+</ul>
+</div>
+<div class="section" id="verifying-admin-authorization-using-curl">
+<span id="verifying-admin-authorization-using-curl"></span><h3>Verifying admin authorization using curl<a class="headerlink" href="#verifying-admin-authorization-using-curl" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first"><strong>Curl commands for a server running with Kerberos enabled:</strong></p>
+<ul>
+<li><p class="first">Once the DeploymentManager is running with DM_ADMIN_USERS set, follow the steps
+<a class="reference external" href="#verifying-kerberos-authentication-using-curl">above</a> to <code class="docutils literal notranslate"><span class="pre">kinit</span></code> and get a <em>TGT</em> for
+the client.</p>
+</li>
+<li><p class="first">The following curl commands should return the client’s admin authorization status:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># This REST API is for Kerberos authenticated clients only</span>
+$ curl --negotiate -u : hostname:8085/api/kerberos/isAdmin
+
+<span class="nb">true</span>
+</pre></div>
+</div>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># The general API endpoint for authorization</span>
+<span class="c1"># Assuming kinit john on client</span>
+$ curl -H <span class="s2">&quot;Content-Type: application/json&quot;</span> -X POST -d <span class="s1">&#39;{&quot;user&quot;:&quot;sally&quot;,&quot;token&quot;:&quot;&quot;}&#39;</span> --negotiate -u : hostname:8085/api/system/isAdmin
+
+john is admin
+</pre></div>
+</div>
+</li>
+<li><p class="first">For the call to <code class="docutils literal notranslate"><span class="pre">/api/system/isAdmin</span></code>, if the server is Kerberized, we check for an
+authenticated client principal, irrespective of the user supplied in the POST request.</p>
+</li>
+</ul>
+</li>
+<li><p class="first"><strong>Curl commands for server running with Kerberos disabled:</strong></p>
+<ul>
+<li><p class="first">The following curl command should return the client’s admin authorization status:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl -H <span class="s2">&quot;Content-Type: application/json&quot;</span> -X POST -d <span class="s1">&#39;{&quot;user&quot;:&quot;john&quot;,&quot;token&quot;:&quot;xyz&quot;}&#39;</span> --negotiate -u : hostname:8085/api/system/isAdmin
+
+john is admin
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="authorization-of-authenticated-vs-unauthenticated-clients">
+<span id="authorization-of-authenticated-vs-unauthenticated-clients"></span><h3>Authorization of authenticated vs. unauthenticated clients.<a class="headerlink" href="#authorization-of-authenticated-vs-unauthenticated-clients" title="Permalink to this headline">¶</a></h3>
+<p>Keep in mind the following points:</p>
+<ul class="simple">
+<li>Authentication and authorization are independent.</li>
+<li>If the client is Kerberos authenticated, then the Kerberos principal used by the client
+is used to authorize the user as an Admin,
+<strong>irrespective of the user information stored in the request.</strong></li>
+<li>If the client is not Kerberos authenticated, the user information provided in the
+request is used to authorize the client.</li>
+<li>In either case, <strong>the user being authorized must be a valid Unix user.</strong> If this is not
+the case, an appropriate error message will be returned.</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Secure DeploymentManager REST API Access</a><ul>
+<li><a class="reference internal" href="#kerberos-authentication">Kerberos Authentication</a><ul>
+<li><a class="reference internal" href="#prerequisites-to-enable-kerberos-on-the-deploymentmanager">Prerequisites to enable Kerberos on the DeploymentManager</a><ul>
+<li><a class="reference internal" href="#setting-up-the-required-configurations">Setting up the required configurations</a></li>
+<li><a class="reference internal" href="#verifying-kerberos-state-at-startup">Verifying Kerberos state at startup</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#verifying-kerberos-authentication-using-curl">Verifying Kerberos authentication using curl</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#dm-administrator-authorization">DM Administrator authorization</a><ul>
+<li><a class="reference internal" href="#setting-up-users-and-groups-with-administrator-privileges">Setting up users and groups with administrator privileges</a></li>
+<li><a class="reference internal" href="#verifying-admin-authorization-using-curl">Verifying admin authorization using curl</a></li>
+<li><a class="reference internal" href="#authorization-of-authenticated-vs-unauthenticated-clients">Authorization of authenticated vs. unauthenticated clients.</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Security.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, azzy.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+    </div>
+  </body>
+</html>

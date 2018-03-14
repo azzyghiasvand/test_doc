@@ -1,0 +1,240 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Kerberized Cluster Setup &#8212; Cerebro Data 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="kerberized-cluster-setup">
+<span id="kerberized-cluster-setup"></span><h1>Kerberized Cluster Setup<a class="headerlink" href="#kerberized-cluster-setup" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial demonstrates how to set up a Kerberized Cerebro cluster that has end-to-end
+authentication enabled. This process generally involves the following three steps:</p>
+<ul class="simple">
+<li>Create a keytab with two principals, one with the <em>service name</em> as <strong>cerebro</strong> and
+another with the <em>service name</em> as <strong>HTTP</strong>.</li>
+<li>Set the keytab and principal configs in the environment.</li>
+</ul>
+<p>The tutorial breaks the above steps into the following:</p>
+<ul class="simple">
+<li><a class="reference external" href="#prerequisites">Prerequisites</a></li>
+<li><a class="reference external" href="#creation-of-the-kerberos-principals-and-keytab-files">Creation of the Kerberos principals and keytab files</a></li>
+<li><a class="reference external" href="#setting-up-the-credentials">Setting up the credentials</a></li>
+</ul>
+<div class="section" id="prerequisites">
+<span id="prerequisites"></span><h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<p>This section lists out the necessary requirements to enable Kerberos for Cerebro.</p>
+<ul class="simple">
+<li><strong>KDC</strong>
+Make sure that you have a KDC set up and available, and can either request for
+credentials, or have access to the KDC to set up credentials yourself.</li>
+<li><strong>Ensure client side Kerberos packages are installed</strong>
+Try running <code class="docutils literal notranslate"><span class="pre">kinit</span></code> and <code class="docutils literal notranslate"><span class="pre">klist</span></code> and make sure these utilities are installed.</li>
+<li><strong>Kerberos Configuration File</strong>
+This file is known as the <strong>krb5.conf</strong> file and this contains the information
+needed to authenticate a client against a KDC.<ul>
+<li>Make sure that this file exists in the location <strong>/etc/krb5.conf</strong>.</li>
+<li>Make sure that this file has the correct <code class="docutils literal notranslate"><span class="pre">default_realm</span></code> and <code class="docutils literal notranslate"><span class="pre">realm</span></code> information.</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="creation-of-the-kerberos-principals-and-keytab-files">
+<span id="creation-of-the-kerberos-principals-and-keytab-files"></span><h2>Creation of the Kerberos principals and keytab files.<a class="headerlink" href="#creation-of-the-kerberos-principals-and-keytab-files" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>In order to allow Cerebro’s internal services to be authenticated end-to-end, we need
+to create the following <em>2</em> Kerberos principals, and add them to <strong>a single keytab file</strong>:<ul>
+<li><strong>Cerebro principal</strong>
+This is of the format <code class="docutils literal notranslate"><span class="pre">cerebro/&lt;instance&gt;&#64;REALM</span></code>. For example, this can be
+<code class="docutils literal notranslate"><span class="pre">cerebro/cerebro-service&#64;CEREBRO.TEST</span></code></li>
+<li><strong>HTTP principal</strong>
+This is of the format <code class="docutils literal notranslate"><span class="pre">HTTP/&lt;instance&gt;&#64;REALM</span></code>. For example, this can be
+<code class="docutils literal notranslate"><span class="pre">HTTP/cerebro-service&#64;CEREBRO.TEST</span></code></li>
+</ul>
+</li>
+<li>To do this, log in with kadmin, and run the following command for each of the
+principals that needs to be created: <code class="docutils literal notranslate"><span class="pre">addprinc</span> <span class="pre">-randkey</span> <span class="pre">&lt;principal_name&gt;</span></code></li>
+<li>Once the principals are created, create a single keytab file which contains both
+principals. To do this, log into the kadmin util, and run the following command:
+<code class="docutils literal notranslate"><span class="pre">ktadd</span> <span class="pre">-kt</span> <span class="pre">&lt;keytab_file_name&gt;</span> <span class="pre">&lt;principal_name_1&gt;</span> <span class="pre">&lt;principal_name_2&gt;</span></code></li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Log into your kadmin tool</span>
+$ sudo kadmin.local
+kadmin.local:
+
+<span class="c1"># Make sure the required principals don&#39;t exist by using the following command</span>
+kadmin.local: listprincs
+prim1/inst1@CERBERO.TEST
+prim2/inst2@CEREBRO.TEST
+prim2/inst3@CERBERO.TEST
+kadmin.local:
+
+<span class="c1"># Create the Cerebro principal.</span>
+<span class="c1"># If you don&#39;t want a password, use the -randkey flag.</span>
+<span class="c1"># If you would rather have a password, don&#39;t use the flag.</span>
+kadmin.local: addprinc -randkey cerebro/cerebro-service
+WARNING: no policy specified <span class="k">for</span> cerebro/cerebro-service@CEREBRO.TEST<span class="p">;</span> defaulting to no policy
+Principal <span class="s2">&quot;cerebro/cerebro-service@CEREBRO.TEST&quot;</span> created.
+kadmin.local:
+
+<span class="c1"># Create the HTTP principal.</span>
+kadmin.local: addprinc -randkey HTTP/cerebro-service
+WARNING: no policy specified <span class="k">for</span> HTTP/cerebro-service@CEREBRO.TEST<span class="p">;</span> defaulting to no policy
+Principal <span class="s2">&quot;cerebro/cerebro-service@CEREBRO.TEST&quot;</span> created.
+kadmin.local:
+
+<span class="c1"># Create the keytab file</span>
+kadmin.local: ktadd -kt cerebro.keytab cerebro/cerebro-service HTTP/cerebro-service
+Entry <span class="k">for</span> principal cerebro/cerebro-service with kvno <span class="m">3</span>, encryption <span class="nb">type</span> aes256-cts-hmac-sha1-96 added to keytab WRFILE:cerebro.keytab.
+Entry <span class="k">for</span> principal HTTP/cerebro-service with kvno <span class="m">3</span>, encryption <span class="nb">type</span> aes256-cts-hmac-sha1-96 added to keytab WRFILE:cerebro.keytab.
+kadmin.local:
+
+<span class="c1"># Exit the kadmin util</span>
+kadmin.local: q
+$
+</pre></div>
+</div>
+</div>
+<div class="section" id="setting-up-the-credentials">
+<span id="setting-up-the-credentials"></span><h2>Setting up the credentials<a class="headerlink" href="#setting-up-the-credentials" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first"><strong>Ensuring the keytab file has appropriate permissions</strong>
+Once the keytab file, has been created, look at the file permissions using
+<code class="docutils literal notranslate"><span class="pre">ls</span> <span class="pre">-l</span> <span class="pre">&lt;KEYTAB_FILE_NAME&gt;</span></code> Make sure everyone has read and execute privileges at least,
+and if not, do the following: <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">chmod</span> <span class="pre">755</span> <span class="pre">&lt;KEYTAB_FILE_NAME&gt;</span></code></p>
+</li>
+<li><p class="first"><strong>Verifying the keytab file has both the principals</strong>
+Once the keytab file has the proper permissions, verify that both the principals are
+present. The command to do that is: <code class="docutils literal notranslate"><span class="pre">$</span> <span class="pre">klist</span> <span class="pre">-kt</span> <span class="pre">&lt;KEYTAB_FILE_NAME&gt;</span></code></p>
+<p>For example, if the keytab file is called <em>cerebro.keytab</em>, the command looks like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ klist -kt cerebro.keytab
+Keytab name: FILE:dumdum.keytab
+KVNO Timestamp           Principal
+---- ------------------- ------------------------------------------------------
+  4 03/02/2017 13:27:57 cerebro/cerebro-service@CEREBRO.TEST
+  4 03/02/2017 13:27:57 HTTP/cerebro-service@CEREBRO.TEST
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>Setting the environment variables</strong>
+Set the following environment variables:</p>
+<ul class="simple">
+<li><strong>CEREBRO_KERBEROS_PRINCIPAL</strong>
+Set this to the Cerebro principal created above.</li>
+<li><strong>CEREBRO_KERBEROS_KEYTAB_FILE</strong>
+Set this to the path of the keytab file. This can be a local or remote (s3) path.</li>
+<li><strong>CEREBRO_KERBEROS_HTTP_PRINCIPAL</strong>
+Set this to the HTTP principal if the principal is non-standard. This is not
+required if the principals were created with the steps above.</li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># shell
+export CEREBRO_KERBEROS_PRINCIPAL=&lt;principal&gt;
+export CEREBRO_KERBEROS_KEYTAB_FILE=FULL_PATH_TO_KEYTAB_FILE
+
+# Example:
+$ export CEREBERO_KERBEROS_PRINCIPAL=cerebro/cerebro-service
+$ export CEREBRO_KERBEROS_KEYTAB_FILE=cerebro.keytab
+
+# If changing the shell file, follow similar steps as above and then do the following:
+$ source /etc/cerebro/env.sh
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="more-information">
+<span id="more-information"></span><h2>More information<a class="headerlink" href="#more-information" title="Permalink to this headline">¶</a></h2>
+<p>Other docs that might be helpful are:</p>
+<ul class="simple">
+<li><a class="reference external" href="Authentication.md">Authentication</a></li>
+<li><a class="reference external" href="Security.md">Security</a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Kerberized Cluster Setup</a><ul>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li><a class="reference internal" href="#creation-of-the-kerberos-principals-and-keytab-files">Creation of the Kerberos principals and keytab files.</a></li>
+<li><a class="reference internal" href="#setting-up-the-credentials">Setting up the credentials</a></li>
+<li><a class="reference internal" href="#more-information">More information</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/KerberosClusterSetup.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, azzy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/KerberosClusterSetup.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,233 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Supported SQL &#8212; cerebro data pre-release  documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="supported-sql">
+<span id="supported-sql"></span><h1>Supported SQL<a class="headerlink" href="#supported-sql" title="Permalink to this headline">¶</a></h1>
+<p>CDAS allows datasets to be defined using SQL. This is typically done by creating base
+datasets and then defining views on top of them. CDAS is not a full massively parallel
+processing (MPP) analytics engine and only a subset of SQL is allowed. This document
+describes the subset that is supported.</p>
+<p>CDAS in general supports the identical data model as Apache Hive and is generally
+compatible with HiveQL.</p>
+<ul class="simple">
+<li><a class="reference external" href="#data-definition-language-ddl-statements">Data Definition Statements</a></li>
+<li><a class="reference external" href="#data-manipulation-language-dml-statements">Data Manipulation Statements</a></li>
+</ul>
+<div class="section" id="data-definition-language-ddl-statements">
+<span id="data-definition-language-ddl-statements"></span><h2>Data Definition Language (DDL) statements<a class="headerlink" href="#data-definition-language-ddl-statements" title="Permalink to this headline">¶</a></h2>
+<p>CDAS generally supports the HiveQL DDL statements and tries to be compatible. In some
+cases, CDAS is not compatible and in others, the supported SQL has been extended for
+CDAS specific capabilities. These include all statements that modify the catalog
+and do not read any data (e.g. create, drop, alter).</p>
+<div class="section" id="msck-repair">
+<span id="msck-repair"></span><h3>MSCK Repair<a class="headerlink" href="#msck-repair" title="Permalink to this headline">¶</a></h3>
+<p>CDAS does not support the Hive <code class="docutils literal notranslate"><span class="pre">MSCK</span> <span class="pre">REPAIR</span> <span class="pre">TABLE</span> <span class="pre">[table_name]</span></code> and instead supports
+the alternative, <code class="docutils literal notranslate"><span class="pre">ALTER</span> <span class="pre">TABLE</span> <span class="pre">[table_name]</span> <span class="pre">RECOVER</span> <span class="pre">PARTITIONS</span></code>. This command behaves
+identically otherwise and automatically add partitions to the table based on the
+storage directory structure.</p>
+</div>
+<div class="section" id="extensions">
+<span id="extensions"></span><h3>Extensions<a class="headerlink" href="#extensions" title="Permalink to this headline">¶</a></h3>
+<p><strong>DROP DATABASE/DROP TABLE can optionally drop permissions</strong></p>
+<p>There are use cases where it is valid to retain or drop permissions when the
+corresponding catalog object (db, table, or view) is dropped. CDAS extends the
+DROP DATABASE and DROP TABLE/VIEW statements to optionally specify whether the
+associated permissions should be dropped as well.</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">DROP</span> <span class="k">DATABASE</span> <span class="p">[</span><span class="k">IF</span> <span class="k">EXISTS</span><span class="p">]</span> <span class="n">db</span> <span class="p">[</span><span class="k">CASCADE</span><span class="p">]</span> <span class="p">[(</span><span class="k">INCLUDING</span> <span class="o">|</span> <span class="k">EXCLUDING</span><span class="p">)</span> <span class="n">PERMISSIONS</span><span class="p">];</span>
+<span class="k">DROP</span> <span class="k">TABLE</span> <span class="p">[</span><span class="k">IF</span> <span class="k">EXISTS</span><span class="p">]</span> <span class="p">[</span><span class="n">db</span><span class="p">.]</span><span class="n">tbl</span> <span class="p">[(</span><span class="k">INCLUDING</span> <span class="o">|</span> <span class="k">EXCLUDING</span><span class="p">)</span> <span class="n">PERMISSIONS</span><span class="p">];</span>
+<span class="k">DROP</span> <span class="k">VIEW</span> <span class="p">[</span><span class="k">IF</span> <span class="k">EXISTS</span><span class="p">]</span> <span class="p">[</span><span class="n">db</span><span class="p">.]</span><span class="n">v</span> <span class="p">[(</span><span class="k">INCLUDING</span> <span class="o">|</span> <span class="k">EXCLUDING</span><span class="p">)</span> <span class="n">PERMISSIONS</span><span class="p">];</span>
+</pre></div>
+</div>
+<p>If <code class="docutils literal notranslate"><span class="pre">INCLUDING</span> <span class="pre">PERMISSIONS</span></code>, the corresponding permissions will also be dropped;
+otherwise they will <em>not</em> be dropped and will be applied to future catalog objects with
+that name. If <code class="docutils literal notranslate"><span class="pre">CASCADE</span></code> is specified, then all permissions on the tables and views in the
+database will be dropped as well.</p>
+<p>We recommend that users default to the <code class="docutils literal notranslate"><span class="pre">INCLUDING</span> <span class="pre">PERMISSIONS</span></code> behavior and update
+existing workflows to not rely on permissions being retained longer than the object
+they are created for.</p>
+<p>For users to drop the permissions, they must have grant permissions on the catalog
+object. For example, to be able to drop a database and its permissions, the user must
+be able to issue grant/revoke statements on the database. The user needs to be a catalog
+admin or been granted grant permissions.</p>
+<p><strong>Registering Hive Serialization/Deserialization (SerDe) libraries</strong></p>
+<p>See this <a class="reference external" href="ExtendingCDAS.md">document</a> for the DDL grammar and other SerDe considerations.</p>
+<p><strong>Creating User Defined Functions (UDFS)</strong></p>
+<p>See this <a class="reference external" href="ExtendingCDAS.md">document</a> for the DDL grammar and other UDF considerations.</p>
+<p><strong>Creating external views</strong></p>
+<p>By default, views created in the Cerebro catalog are evaluated in CDAS. This means that
+clients reading the view, get the data only after the view transformations are applied.
+This property is critical for views that enforce security. For example, a view that
+filters out users that are inactive:</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">CREATE</span> <span class="k">VIEW</span> <span class="n">active_users_only</span> <span class="k">AS</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">all_users</span> <span class="k">WHERE</span> <span class="n">active</span> <span class="o">=</span> <span class="k">true</span>
+</pre></div>
+</div>
+<p>Must be evaluated in CDAS, even if the tool reading from CDAS is able to understand and
+evaluate that predicate.</p>
+<p>However, there are other use cases where the views just store non-security related data
+transformations. In this case, it can be useful to return the view definition to the
+compute application. This allows views to be created that implement SQL functionality
+not supported in CDAS as well as potentially deeper integration with the compute
+engine’s query optimization.</p>
+<p>To create views that do not need to be evaluated in CDAS, an external view can be
+created. For example:</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">CREATE</span> <span class="k">EXTERNAL</span> <span class="k">VIEW</span> <span class="n">random_user_subset</span> <span class="k">AS</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">all_users</span> <span class="k">WHERE</span> <span class="n">rand</span><span class="p">()</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<p>By default, views without <code class="docutils literal notranslate"><span class="pre">EXTERNAL</span></code> are evaluated in Cerebro, maintaining backwards
+compatibility.</p>
+</div>
+<div class="section" id="known-incompatibilities">
+<span id="known-incompatibilities"></span><h3>Known incompatibilities<a class="headerlink" href="#known-incompatibilities" title="Permalink to this headline">¶</a></h3>
+<p><strong>Stricter type promotion</strong></p>
+<p>Hive/HiveQL is very permissive in type promotions allowing implicit conversions
+between most types. In CDAS, only lossless type promotion is implicit (e.g. INT -&gt; BIGINT).
+Explicit casts may need to be added for existing SQL statements.</p>
+<p><strong>Disallowing explicit partitioning clause when creating views</strong></p>
+<p>Hive/HiveQL allows for creating views with an explicit partitioning clause, for example</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">CREATE</span> <span class="k">VIEW</span> <span class="n">v</span> <span class="k">as</span> <span class="k">SELECT</span> <span class="p">...</span> <span class="k">FROM</span> <span class="n">base_tbl</span>
+<span class="n">PARTITIONED</span> <span class="k">BY</span> <span class="n">c1</span>
+</pre></div>
+</div>
+<p>CDAS does not allow partitioning to be specified for views. Partitioning is instead
+inferred based on the view statement and base table. This typically means that the
+partitioning on the base table is preserved for the view.</p>
+<p>This is disallowed as it is unclear what the semantics are if the partitioning specified
+in the view is different than the base table and the performance implications.</p>
+</div>
+</div>
+<div class="section" id="data-manipulation-language-dml-statements">
+<span id="data-manipulation-language-dml-statements"></span><h2>Data Manipulation Language (DML) statements<a class="headerlink" href="#data-manipulation-language-dml-statements" title="Permalink to this headline">¶</a></h2>
+<p>CDAS is not a distributed SQL engine and only support a subset of SQL statements. It does
+not support the other DML statements (e.g. INSERT, DELETE, UPDATE, etc). For SELECT
+statements, only a subset of the SQL standard is supported. A typical configuration is
+to run a SQL engine (e.g Spark or Presto) on top of CDAS.</p>
+<p>SELECT statements with projection and filters are fully supported.</p>
+<p>The only AGGREGATION that is supported is <code class="docutils literal notranslate"><span class="pre">count(*)</span></code> with no grouping. In this case
+multiple records will be returned for this query, each containing a partial count.
+Summing up all the counts returns the complete result.</p>
+<div class="section" id="joins">
+<span id="joins"></span><h3>JOINs<a class="headerlink" href="#joins" title="Permalink to this headline">¶</a></h3>
+<p>CDAS supports a limited set of joins for the purpose of restricting access to specific
+rows for particular users. A canonical use case would be having a fact dataset for user
+transactions, which contains a column for the user id. Another, much smaller dataset,
+contains the set of user ids which allow analytics to be done on their activity. CDAS
+would support filtering the transactions dataset by creating a view that is a join over
+the two.</p>
+<p>The specific limitations are:</p>
+<ul class="simple">
+<li>Only INNER and LEFT (out, semi, anti) joins are allowed.</li>
+<li>The smaller tables must be under a maximum configured size. If the smaller tables
+exceed this size, the request will fail at runtime.</li>
+</ul>
+<p>Subquery rewrites are supported but must be executable subject to the same constraints.</p>
+<div class="section" id="configurations">
+<span id="configurations"></span><h4>Configurations<a class="headerlink" href="#configurations" title="Permalink to this headline">¶</a></h4>
+<p>Configurations can be specified at cluster creation time via the CLI.</p>
+<p>By default, joins are enabled with a maximum memory of 128MB per join.</p>
+<p><strong>Disabling entirely</strong></p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cerebro_cli clusters create --plannerConfigs <span class="s2">&quot;enable_joins=false&quot;</span> ...
+</pre></div>
+</div>
+<p><strong>Controlling the maximum memory allowed per join</strong></p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cerebro_cli clusters create --workerConfigs <span class="s2">&quot;join_max_mem=&lt;value in bytes&gt;&quot;</span> ...
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Supported SQL</a><ul>
+<li><a class="reference internal" href="#data-definition-language-ddl-statements">Data Definition Language (DDL) statements</a><ul>
+<li><a class="reference internal" href="#msck-repair">MSCK Repair</a></li>
+<li><a class="reference internal" href="#extensions">Extensions</a></li>
+<li><a class="reference internal" href="#known-incompatibilities">Known incompatibilities</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#data-manipulation-language-dml-statements">Data Manipulation Language (DML) statements</a><ul>
+<li><a class="reference internal" href="#joins">JOINs</a><ul>
+<li><a class="reference internal" href="#configurations">Configurations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/SupportedSQL.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, azzy.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,151 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cluster Launch Plugin API &#8212; Cerebro Data 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cluster-launch-plugin-api">
+<span id="cluster-launch-plugin-api"></span><h1>Cluster Launch Plugin API<a class="headerlink" href="#cluster-launch-plugin-api" title="Permalink to this headline">¶</a></h1>
+<p>The DeploymentManager provides a plugin API to customize how machines are launched.
+The steps are split into:</p>
+<ul class="simple">
+<li>Launch script: Run on the DeploymentManager to launch machine.</li>
+<li>Init scripts: Run on the launched machines.</li>
+</ul>
+<p>This document describes the detailed API for both kind of scripts.</p>
+<div class="section" id="general">
+<span id="general"></span><h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
+<p>The scripts need to be available to the DeploymentManager. They can either be files on a
+shared FileSystem (including S3) or available on the DeploymentManager machine.
+The DeploymentManager will make a copy of the scripts so subsequent edits do not
+affect existing uses.</p>
+<p>The scripts can be written in any language and we do not inspect them. We simply run
+them. We recommend writing them in bash as it will run without requiring bootstrapping
+(e.g. installing python).</p>
+<p>The scripts should return 0 on success and non-zero on error. The scripts should print
+to stderr for diagnostics (ignored by Cerebro except for logging) and print to stdout
+the result. Cerebro parses the output from standard out and it must be output exactly
+as described in this document.</p>
+</div>
+<div class="section" id="launch-script">
+<span id="launch-script"></span><h2>Launch script<a class="headerlink" href="#launch-script" title="Permalink to this headline">¶</a></h2>
+<p>This script is required and is responsible for starting a new instance when called.
+Examples of actions in this script are:</p>
+<ul class="simple">
+<li>Launch the EC2 machine in the desired VPC, with ssh keys, correct security group.</li>
+<li>Tag the machine as required.</li>
+</ul>
+<p>This script must accept a single argument and this must be passed as the <code class="docutils literal notranslate"><span class="pre">--user-data</span></code>
+argument when launching the instance.</p>
+<p>This script should print to standard out the <code class="docutils literal notranslate"><span class="pre">instance_id</span></code>. The script <em>cannot</em> output
+anything else to standard out.</p>
+<div class="section" id="template">
+<span id="template"></span><h3>Template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h3>
+<p>We recommend looking at the template file that comes as part of the Cerebro install.
+This is by default in <code class="docutils literal notranslate"><span class="pre">/opt/cerebro/deploymentmanager/bin/start-ec2-machine-example.sh</span></code>.
+This script can help you get started. The sections in it marked by <code class="docutils literal notranslate"><span class="pre">USER</span></code> are the most
+common customizations.</p>
+</div>
+</div>
+<div class="section" id="init-scripts">
+<span id="init-scripts"></span><h2>Init scripts<a class="headerlink" href="#init-scripts" title="Permalink to this headline">¶</a></h2>
+<p>The DeploymentManager allows you to specify a list of scripts that should be run on the
+instance when it is first provisioned. This is equivalent to running all of these scripts
+as part of the <code class="docutils literal notranslate"><span class="pre">--user-data</span></code> AWS EC2 configuration. These scripts are run in the order
+they are provided and run before any Cerebro instance setup scripts. We’ve provided an
+example that will set up the package repo to an internal location:
+<code class="docutils literal notranslate"><span class="pre">/opt/cerebro/deploymentmanager/bin/setup-repo-example.sh</span></code></p>
+<p>These scripts should return non-zero on error and can log to stdout or stderr.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Cluster Launch Plugin API</a><ul>
+<li><a class="reference internal" href="#general">General</a></li>
+<li><a class="reference internal" href="#launch-script">Launch script</a><ul>
+<li><a class="reference internal" href="#template">Template</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#init-scripts">Init scripts</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ClusterLaunchPluginApi.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, azzy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/ClusterLaunchPluginApi.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

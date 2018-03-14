@@ -1,0 +1,189 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Tableau Web Data Connector (WDC) &#8212; cerebro data pre-release  documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tableau-web-data-connector-wdc">
+<span id="tableau-web-data-connector-wdc"></span><h1>Tableau Web Data Connector (WDC)<a class="headerlink" href="#tableau-web-data-connector-wdc" title="Permalink to this headline">¶</a></h1>
+<p>This document describes how to use the Tableau Web Data Connector (WDC) to access data
+from the Cerebro Access Platform.</p>
+<p>NOTE: the Cerebro-Tableau Web Data Connector (WDC) is a “beta” product. Depending on
+usability and requirement changes, the interface may change.</p>
+<p>The purpose of the Tableau Web Data Connector (WDC) is to provide access to data from the
+Cerebro Access Platform from within the Tableau product suite. A Tableau license is
+required to use the Tableau Web Data Connector. This document does not provide any
+instructions on how to use Tableau other than the steps required to start the Web Data
+Connector and select a representative data set.</p>
+<p>The Tableau Web Data Connector was written and tested using Tableau Desktop (tm)
+Professional Edition version 10.1.4, 64-bit an Apple Inc. Computer (tm) running
+macOS Sierra Version 10.12.3.</p>
+<div class="section" id="using-the-tableau-web-data-connector-wdc">
+<span id="using-the-tableau-web-data-connector-wdc"></span><h2>Using the Tableau Web Data Connector (WDC)<a class="headerlink" href="#using-the-tableau-web-data-connector-wdc" title="Permalink to this headline">¶</a></h2>
+<p>These instructions assume that you have access to the Tableau Desktop (tm)
+Professional Edition product.</p>
+<ol class="simple">
+<li>Open Tableau Desktop.  The following screen should appear:</li>
+</ol>
+<p><img alt="Tableau Opening Screen" src="https://s3.amazonaws.com/cerebrodata-docs/images/TableauOpeningScreen.png" /></p>
+<ol class="simple">
+<li>Select Web Data Connector from the left-hand navigation menu</li>
+<li>The following screen should appear:</li>
+</ol>
+<p><img alt="Tableau Selection Page" src="https://s3.amazonaws.com/cerebrodata-docs/images/TableauConnectorSelection.png" /></p>
+<p>NOTE: the list of ‘Recent Connectors’ is illustrative and may not match your list.</p>
+<ol class="simple">
+<li>Click in the box labeled ‘Enter your web data connector URL here’. Enter the URL of
+the <em>cdas_rest_api</em> in the box followed by <strong>/wdc</strong>. The following page will appear:</li>
+</ol>
+<p><img alt="Tableau Web Data Connectior" src="https://s3.amazonaws.com/cerebrodata-docs/images/TableauWebDataConnector.png" /></p>
+<ol class="simple">
+<li>Enter a valid authentication token in the text box above the ‘Accept Auth Token’
+button and press the ‘Accept Auth Token’ button. A valid authentication token can be
+acquired by referring to the ‘Getting a token’ section of <a class="reference external" href="Authentication.md">authentication document</a>.</li>
+<li>(Optional) Modify the “Max records” field. This field will dictate how many records
+per dataset will be fetched at most. Lower numbers can significantly improve performance.</li>
+<li>Click the ‘Get Data!’ link when it becomes highlighted.</li>
+<li>A page similar to the following page should appear. Please note that the data sets in
+this list are illustrative only.</li>
+</ol>
+<p><img alt="Tableau Web Data Connector Data Sets" src="https://s3.amazonaws.com/cerebrodata-docs/images/TableauDataSets.png" /></p>
+<ol class="simple">
+<li>Select a data set from the left hand list. The schema of the selected data set should
+appear. The page should be similar to the following:</li>
+</ol>
+<p><img alt="Tableau Web Data Connector Schema" src="https://s3.amazonaws.com/cerebrodata-docs/images/TableauSchema.png" /></p>
+<ol class="simple">
+<li>Click the ‘Update Now’ link to load the data. A page similar to the following should
+appear. The length of time for this step to complete will vary depending on the amount of
+data in your selected data set.</li>
+</ol>
+<p><img alt="Tableau Data View" src="https://s3.amazonaws.com/cerebrodata-docs/images/TableauDataView.png" /></p>
+</div>
+<div class="section" id="error-handling">
+<span id="error-handling"></span><h2>Error Handling<a class="headerlink" href="#error-handling" title="Permalink to this headline">¶</a></h2>
+<p>In the case where only part of the catalog could be loaded due to errors, the partial
+catalog will be populated. If you believe this is occurring:</p>
+<ol class="simple">
+<li>Verify that the catalog is accessible to you from another client (e.g. hive or hue)</li>
+<li>Consult the CDAS REST server log for details.</li>
+</ol>
+<p>The catalog entries could fail to load due to any number of issues, for example:</p>
+<ol class="simple">
+<li>Corrupt metadata such as an invalid view definition.</li>
+<li>Intermittent network or system outage.</li>
+</ol>
+</div>
+<div class="section" id="error-reporting">
+<span id="error-reporting"></span><h2>Error Reporting<a class="headerlink" href="#error-reporting" title="Permalink to this headline">¶</a></h2>
+<p>When errors are detected, because of either user error, system error or communication
+error the following dialog will be presented:</p>
+<p><img alt="Tableau Exception Report" src="https://s3.amazonaws.com/cerebrodata-docs/images/TableauExceptionReport.png" /></p>
+<p>Clicking on ‘Show Details’ presents additional information, such as:</p>
+<p><img alt="Tableau Exception Detail" src="https://s3.amazonaws.com/cerebrodata-docs/images/TableauExceptionDetail.png" /></p>
+<p>The contents of these pages are illustrative only. The actual contents may vary,
+depending on the reason for the error or exception.</p>
+</div>
+<div class="section" id="common-error-messages">
+<span id="common-error-messages"></span><h2>Common Error Messages<a class="headerlink" href="#common-error-messages" title="Permalink to this headline">¶</a></h2>
+<p>The following are a list of known exceptions and the root cause for each exception:</p>
+<ol>
+<li><p class="first"><em>User does not have access to any tables.</em></p>
+<p>The catalog returned an empty list of table names. Verify that the token you entered
+is valid and that if it is valid, that there are tables assigned in the catalog for
+the user.</p>
+</li>
+<li><p class="first"><em>Error reading data for table: <strong>table name</strong>.</em></p>
+<p>An internal error or communications error occurred while retrieving data for the
+table <em>table name</em>. If it is a communication error, retry the request. If it is an
+internal error, report the problem along with the scenario you attempted.</p>
+</li>
+<li><p class="first"><em>Error loading tables in database.</em></p>
+<p>An internal error or communications error occurred while loading catalog.</p>
+</li>
+</ol>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Tableau Web Data Connector (WDC)</a><ul>
+<li><a class="reference internal" href="#using-the-tableau-web-data-connector-wdc">Using the Tableau Web Data Connector (WDC)</a></li>
+<li><a class="reference internal" href="#error-handling">Error Handling</a></li>
+<li><a class="reference internal" href="#error-reporting">Error Reporting</a></li>
+<li><a class="reference internal" href="#common-error-messages">Common Error Messages</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/TableauWDC.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, azzy.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+    </div>
+  </body>
+</html>

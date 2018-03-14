@@ -1,0 +1,358 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Extending CDAS &#8212; Cerebro Data 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="extending-cdas">
+<span id="extending-cdas"></span><h1>Extending CDAS<a class="headerlink" href="#extending-cdas" title="Permalink to this headline">¶</a></h1>
+<p>Users can extend Cerebro Data Access Service (CDAS)’s functionality in two ways. CDAS’
+supports running user defined functions (UDFs) and Hive Serialization/Deserialization
+libraries (SerDes). UDFs and SerDes provide powerful ways to extend the capabilities of
+CDAS. Example use cases include:</p>
+<ul class="simple">
+<li>UDF: A custom anonymization or data encryption algorithm</li>
+<li>UDF: Complicated filters that are more naturally expressed in code vs SQL</li>
+<li>SerDe: Support reading a file format (i.e. Multi-delimited CSV) not supported by CDAS</li>
+<li>SerDe: Support a custom in-house file format</li>
+</ul>
+<div class="section" id="security">
+<span id="security"></span><h2>Security<a class="headerlink" href="#security" title="Permalink to this headline">¶</a></h2>
+<p>UDFs and SerDes run in the same process with the same permissions as the rest of CDAS,
+typically running as the system user. In particular these libraries have access to all
+the data that CDAS has and a malicious library can potentially access data that is
+currently being processed. We assume the libraries are <em>trusted</em> and currently the only
+measure to protect against ill-behaving libraries is to restrict who can register them.</p>
+<p>Only users who are catalog admins are allowed to register and unregister UDFs and SerDes.
+It is not possible to delegate this capability to other users (i.e. in the same way the
+permission to grant can be delegated).</p>
+<p>As a best practice, we also recommend that the location of the libraries be secured to
+prevent another user from replacing it with a malicious binary (i.e. most users should
+not have write access to that location.)</p>
+</div>
+<div class="section" id="udfs">
+<span id="udfs"></span><h2>UDFs<a class="headerlink" href="#udfs" title="Permalink to this headline">¶</a></h2>
+<p>To use UDFs, the steps are:</p>
+<ul class="simple">
+<li>Register the UDF in the CDAS catalog. Only the catalog admins can do this.</li>
+<li>Create views (or issue queries) that use the UDF with typical SQL statements. Any user
+can use the UDF.</li>
+<li>Read data from the view. The UDF will be evaluated by CDAS before the data is returned.</li>
+</ul>
+<p>As an example for this document, we will use a UDF that accepts strings and masks all
+characters in it. For example <code class="docutils literal notranslate"><span class="pre">mask('hello')-&gt;</span> <span class="pre">'xxxxx'</span></code>.</p>
+<p>CDAS supports UDFs written against the Hive <a class="reference external" href="https://github.com/apache/hive/blob/master/ql/src/java/org/apache/hadoop/hive/ql/exec/UDF.java">interface</a>.
+These JARs should be compatible with Hive, with no additional steps.</p>
+<p>For this UDF, the code might look like:</p>
+<div class="highlight-java notranslate"><div class="highlight"><pre><span></span><span class="kn">package</span> <span class="nn">com.cerebro.hiveudf</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">org.apache.hadoop.hive.ql.exec.UDF</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.apache.hadoop.io.Text</span><span class="o">;</span>
+
+<span class="cm">/**</span>
+<span class="cm"> * UDF which masks all characters from the input string.</span>
+<span class="cm"> *</span>
+<span class="cm"> * SELECT mask(&#39;hello&#39;)</span>
+<span class="cm"> * &gt; &#39;xxxx&#39;</span>
+<span class="cm"> */</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">MaskUDF</span> <span class="kd">extends</span> <span class="n">UDF</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="n">Text</span> <span class="nf">evaluate</span><span class="o">(</span><span class="n">Text</span> <span class="n">t</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">t</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="kt">byte</span><span class="o">[]</span> <span class="n">result</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="n">t</span><span class="o">.</span><span class="na">getBytes</span><span class="o">().</span><span class="na">length</span><span class="o">];</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">result</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+      <span class="n">result</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="sc">&#39;x&#39;</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="n">Text</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="section" id="registering-the-udf">
+<span id="registering-the-udf"></span><h3>Registering the UDF<a class="headerlink" href="#registering-the-udf" title="Permalink to this headline">¶</a></h3>
+<p>To register the UDF, use one of our client tools (e.g. <code class="docutils literal notranslate"><span class="pre">dbcli</span></code>) which allow executing DDL
+statements against CDAS, using the <code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">FUNCTION</span></code> statement.</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">CREATE</span> <span class="k">FUNCTION</span> <span class="p">[</span><span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span><span class="p">]</span> <span class="p">[</span><span class="n">db_name</span><span class="p">.]</span><span class="n">function_name</span><span class="p">([</span><span class="n">arg_type</span><span class="p">[,</span> <span class="n">arg_type</span><span class="p">...])</span>
+  <span class="k">RETURNS</span> <span class="n">return_type</span>
+  <span class="k">LOCATION</span> <span class="s1">&#39;s3_path&#39;</span>
+  <span class="n">SYMBOL</span><span class="o">=</span><span class="s1">&#39;class name of UDF&#39;</span>
+</pre></div>
+</div>
+<p>Note that function overloading is supported. Functions can have the same name with
+different signatures.</p>
+<p>For example, with the <code class="docutils literal notranslate"><span class="pre">MaskUDF</span></code> it would be:</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">CREATE</span> <span class="k">FUNCTION</span> <span class="n">cerebro_sample</span><span class="p">.</span><span class="n">mask</span><span class="p">(</span><span class="n">STRING</span><span class="p">)</span>
+  <span class="k">RETURNS</span> <span class="n">STRING</span>
+  <span class="k">LOCATION</span> <span class="s1">&#39;s3://cerebrodata-public-east/udfs/mask-udf.jar&#39;</span>
+  <span class="n">SYMBOL</span><span class="o">=</span><span class="s1">&#39;com.cerebro.hiveudf.MaskUDF&#39;</span>
+</pre></div>
+</div>
+<p>To drop the UDF, use the <code class="docutils literal notranslate"><span class="pre">DROP</span> <span class="pre">FUNCTION</span></code> statement:</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">DROP</span> <span class="k">FUNCTION</span> <span class="p">[</span><span class="k">IF</span> <span class="k">EXISTS</span><span class="p">]</span> <span class="p">[</span><span class="n">db_name</span><span class="p">.]</span><span class="n">function_name</span><span class="p">([</span><span class="n">arg_type</span><span class="p">[,</span> <span class="n">arg_type</span><span class="p">...])</span>
+
+<span class="c1">-- For example</span>
+<span class="k">DROP</span> <span class="k">FUNCTION</span> <span class="n">cerebro_sample</span><span class="p">.</span><span class="n">mask</span><span class="p">(</span><span class="n">STRING</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="using-the-udf-directly">
+<span id="using-the-udf-directly"></span><h2>Using the UDF directly<a class="headerlink" href="#using-the-udf-directly" title="Permalink to this headline">¶</a></h2>
+<p>If directly issuing SQL against our planner, the UDF can be used like any other builtin.
+For example:</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="n">record</span><span class="p">,</span> <span class="n">cerebro_sample</span><span class="p">.</span><span class="n">mask</span><span class="p">(</span><span class="n">record</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">cerebro_sample</span><span class="p">.</span><span class="n">sample</span>
+</pre></div>
+</div>
+<p>| record        | cerebro_sample.mask(record) |
+| ————- |:————-:|
+|This is a sample test file.|xxxxxxxxxxxxxxxxxxxxxxxxxxx|
+|It should consist of two lines.|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|</p>
+</div>
+<div class="section" id="using-the-udf-from-views">
+<span id="using-the-udf-from-views"></span><h2>Using the UDF from views<a class="headerlink" href="#using-the-udf-from-views" title="Permalink to this headline">¶</a></h2>
+<p>We expect in many cases, users will access CDAS through another SQL tool, which may or
+may not know how to handle the UDFs and the most common way will be to “hide” the UDF
+behind a CDAS view. In the on-going example if we wanted to protect the
+<code class="docutils literal notranslate"><span class="pre">cerebro_sample.sample</span></code> dataset with the UDF, we would create a view that applies the
+UDF to the columns in it, and then grant access to the view. For example:</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">CREATE</span> <span class="k">VIEW</span> <span class="n">cerebro_sample</span><span class="p">.</span><span class="n">secure_sample</span> <span class="k">as</span>
+<span class="k">SELECT</span> <span class="n">cerebro_sample</span><span class="p">.</span><span class="n">mask</span><span class="p">(</span><span class="n">record</span><span class="p">)</span> <span class="k">as</span> <span class="n">record</span>
+<span class="k">FROM</span> <span class="n">cerebro_sample</span><span class="p">.</span><span class="n">sample</span>
+<span class="c1">-- GRANT SELECT ON table cerebro_sample.secure_sample to ROLE &lt;ROLE&gt;</span>
+</pre></div>
+</div>
+<p>Users can then select from this view, and the UDF is automatically applied.</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">from</span> <span class="n">cerebro_sample</span><span class="p">.</span><span class="n">secure_sample</span>
+</pre></div>
+</div>
+<p>| record        |
+| ————- |
+|xxxxxxxxxxxxxxxxxxxxxxxxxxx|
+|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|</p>
+<p>In this case the UDF is completely hidden from the compute tool talking to CDAS. The tool
+does not know (and therefore have access to the UDF binary in anyway).</p>
+<div class="section" id="errors">
+<span id="errors"></span><h3>Errors<a class="headerlink" href="#errors" title="Permalink to this headline">¶</a></h3>
+<p><strong>User is not admin</strong></p>
+<p>In this case, the user is not a catalog admin. He/she will see:</p>
+<p><code class="docutils literal notranslate"><span class="pre">AuthorizationException:</span> <span class="pre">User</span> <span class="pre">'dev-user'</span> <span class="pre">does</span> <span class="pre">not</span> <span class="pre">have</span> <span class="pre">privileges</span> <span class="pre">to</span> <span class="pre">CREATE/DROP</span> <span class="pre">functions.</span></code></p>
+<p><strong>Dropping a function that is being used</strong></p>
+<p>In this case, the views that depend on it will fail. The error will be:</p>
+<p><code class="docutils literal notranslate"><span class="pre">AnalysisException:</span> <span class="pre">cerebro_sample.mask()</span> <span class="pre">unknown.</span></code></p>
+</div>
+</div>
+<div class="section" id="limitations">
+<span id="limitations"></span><h2>Limitations<a class="headerlink" href="#limitations" title="Permalink to this headline">¶</a></h2>
+<p><strong>Cannot grant on UDF</strong></p>
+<p>We currently do not provide access controls on the UDF. Only admins can create them, and
+then all users can use them. It is not possible to grant usage of a UDF to a particular
+user/group.</p>
+<p><strong>Cannot issue CREATE/DROP FUNCTION through hive CLI/beeline</strong></p>
+<p>The hive client integration currently does not support this DDL statement. This is
+expected to be added in the very near future.</p>
+</div>
+<div class="section" id="serdes">
+<span id="serdes"></span><h2>SerDes<a class="headerlink" href="#serdes" title="Permalink to this headline">¶</a></h2>
+<p>CDAS supports a subset of valid Hive SerDes. The SerDes must use the <code class="docutils literal notranslate"><span class="pre">text</span></code> serialization
+meaning that the file format consists of line by line text, with some arbitrary
+serialization for each line. Examples of SerDes that are supported are:</p>
+<ul class="simple">
+<li>Regex SerDe (each line’s contents can be extracted by RegEx)</li>
+<li>Thrift SerDe (each line is a serialized thrift object)</li>
+<li>Json SerDe (each line is json)</li>
+<li>Multi-Delimiter CSV SerDe (each line has a CSV structure, with many options)</li>
+</ul>
+<p>Example of SerDes that are not supported include file formats which for sophisticated
+file structure:</p>
+<ul class="simple">
+<li>SequenceFile</li>
+<li>Avro</li>
+<li>Parquet</li>
+<li>Orc</li>
+</ul>
+<p>SequenceFile, Avro and Parquet are natively supported by CDAS and does not need a SerDe.</p>
+<div class="section" id="using-a-serde">
+<span id="using-a-serde"></span><h3>Using a SerDe<a class="headerlink" href="#using-a-serde" title="Permalink to this headline">¶</a></h3>
+<p>The SerDe library must be specified when creating the table. The DDL to use a SerDe is
+extends the <code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">TABLE</span></code> statement, with additional options. The path to the SerDe jar
+must be specified (can be any URI, typically the S3 path), the fully qualified classpath
+and optionally any additional properties for the SerDe. The table can be partitioned or
+created with comments, just like any other table.</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">CREATE</span> <span class="p">[</span><span class="k">EXTERNAL</span><span class="p">]</span> <span class="p">[</span><span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span><span class="p">]</span> <span class="k">TABLE</span> <span class="o">&lt;</span><span class="n">tbl</span><span class="o">&gt;</span><span class="p">(</span><span class="o">&lt;</span><span class="k">SCHEMA</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="k">ROW</span> <span class="n">FORMAT</span> <span class="n">SERDE</span> <span class="s1">&#39;&lt;PATH TO SERDE JAR&gt;&#39;</span> <span class="n">SYMBOL</span> <span class="s1">&#39;&lt;CLASS NAME OF SERDE&gt;&#39;</span>
+<span class="p">[</span><span class="k">WITH</span> <span class="n">SERDEPROPERTIES</span><span class="p">(</span><span class="s1">&#39;&lt;key&gt;&#39;</span> <span class="o">=</span> <span class="s1">&#39;value&#39;</span><span class="p">)]</span>
+<span class="p">[</span><span class="k">LOCATION</span> <span class="o">|</span> <span class="k">COMMENT</span> <span class="o">|</span> <span class="p">...]</span>
+</pre></div>
+</div>
+<p>For example, to use Hive’s <a class="reference external" href="https://github.com/apache/hive/blob/trunk/contrib/src/java/org/apache/hadoop/hive/contrib/serde2/RegexSerDe.java">RegexSerDe</a>,
+assuming the library is available at <code class="docutils literal notranslate"><span class="pre">s3://my-company/serdes/regex-serde.jar</span></code>:</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span>CREATE TABLE apachelog (
+  host STRING,
+  identity STRING,
+  user STRING,
+  ts STRING,
+  request STRING,
+  status STRING,
+  size STRING,
+  referrer STRING,
+  agent STRING)
+ROW FORMAT
+SERDE &#39;org.apache.hadoop.hive.serde2.RegexSerDe&#39;
+JAR_PATH &#39;s3://my-company/serdes/regex-serde.jar&#39;
+WITH SERDEPROPERTIES (
+  &quot;input.regex&quot; = &quot;([^]*) ([^]*) ([^]*) (-|\\[^\\]*\\]) ([^ \&quot;]*|\&quot;[^\&quot;]*\&quot;) (-|[0-9]*) (-|[0-9]*)(?: ([^ \&quot;]*|\&quot;.*\&quot;) ([^ \&quot;]*|\&quot;.*\&quot;))?&quot;
+)
+</pre></div>
+</div>
+</div>
+<div class="section" id="tutorial-for-using-c-cedilla-c-as-a-delimiter">
+<span id="tutorial-for-using-c-cedilla-c-as-a-delimiter"></span><h3>Tutorial for using Ç (Cedilla-C) as a delimiter<a class="headerlink" href="#tutorial-for-using-c-cedilla-c-as-a-delimiter" title="Permalink to this headline">¶</a></h3>
+<p>As an end to end example, we’ll load a dataset in S3 which uses the <a class="reference external" href="https://en.wikipedia.org/wiki/Ç">Cedilla-C</a>
+as the delimiter, using Hive’s <a class="reference external" href="https://github.com/apache/hive/blob/0af6cb42725659740a022044c6cc464ef1cf4e6b/contrib/src/java/org/apache/hadoop/hive/contrib/serde2/MultiDelimitSerDe.java">MultiDelimitSerde</a>.</p>
+<p>The folder being used in this tutorial is available publicly at
+<code class="docutils literal notranslate"><span class="pre">s3://cerebro-datasets/cedilla_sample/</span></code>.</p>
+<p>The folder contains a file named <code class="docutils literal notranslate"><span class="pre">cedilla_sample.txt</span></code>, the contents of which are</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1</span><span class="n">Ç23</span>
+<span class="n">Ç45</span>
+</pre></div>
+</div>
+<p>The steps are:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the database</span>
+$ ./dbcli dataset hive-ddl <span class="s2">&quot;create database if not exists multibyte_db&quot;</span>
+
+<span class="c1"># Create a table that uses Ç as the field delimiter</span>
+$ ./dbcli dataset hive-ddl <span class="s2">&quot;CREATE EXTERNAL TABLE multibyte_db.cedilla_sample(</span>
+<span class="s2">  int1 int,</span>
+<span class="s2">  int2 int)</span>
+<span class="s2">ROW FORMAT SERDE &#39;org.apache.hadoop.hive.contrib.serde2.MultiDelimitSerDe&#39;</span>
+<span class="s2">WITH SERDEPROPERTIES (&#39;field.delim&#39; = &#39;Ç&#39;)</span>
+<span class="s2">STORED AS TEXTFILE</span>
+<span class="s2">LOCATION &#39;s3://cerebro-datasets/cedilla_sample/&#39;&quot;</span>
+
+<span class="c1"># Read from the table to make sure everything works</span>
+$ ./dbcli dataset cat multibyte_db.cedilla_sample
+
+<span class="c1"># The output expected is</span>
+--- multibyte_db.cedilla_sample ---
+<span class="o">[</span>
+    <span class="o">{</span>
+        <span class="s2">&quot;int1&quot;</span>: <span class="m">1</span>,
+        <span class="s2">&quot;int2&quot;</span>: <span class="m">23</span>
+    <span class="o">}</span>,
+    <span class="o">{</span>
+        <span class="s2">&quot;int1&quot;</span>: <span class="m">0</span>,
+        <span class="s2">&quot;int2&quot;</span>: <span class="m">45</span>
+    <span class="o">}</span>
+<span class="o">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="permission-cascading">
+<span id="permission-cascading"></span><h2>Permission Cascading<a class="headerlink" href="#permission-cascading" title="Permalink to this headline">¶</a></h2>
+<p>When permissions are granted on S3 URIs, they are applied to any subdirectories contained
+within the directory that the permissions are granted on. This allows access to be granted
+on a top-level S3 bucket or any arbitrarily deep subdirectory.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Extending CDAS</a><ul>
+<li><a class="reference internal" href="#security">Security</a></li>
+<li><a class="reference internal" href="#udfs">UDFs</a><ul>
+<li><a class="reference internal" href="#registering-the-udf">Registering the UDF</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#using-the-udf-directly">Using the UDF directly</a></li>
+<li><a class="reference internal" href="#using-the-udf-from-views">Using the UDF from views</a><ul>
+<li><a class="reference internal" href="#errors">Errors</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#limitations">Limitations</a></li>
+<li><a class="reference internal" href="#serdes">SerDes</a><ul>
+<li><a class="reference internal" href="#using-a-serde">Using a SerDe</a></li>
+<li><a class="reference internal" href="#tutorial-for-using-c-cedilla-c-as-a-delimiter">Tutorial for using Ç (Cedilla-C) as a delimiter</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#permission-cascading">Permission Cascading</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ExtendingCDAS.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, azzy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/ExtendingCDAS.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

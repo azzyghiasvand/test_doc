@@ -1,0 +1,129 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Advanced installations &#8212; cerebro data pre-release  documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="advanced-installations">
+<span id="advanced-installations"></span><h1>Advanced installations<a class="headerlink" href="#advanced-installations" title="Permalink to this headline">¶</a></h1>
+<p>This document describes advanced Cerebro installs. This document assumes the user is
+familiar with the base install and will describe changes relative to that process.</p>
+<div class="section" id="external-hive-metastore">
+<span id="external-hive-metastore"></span><h2>External Hive Metastore<a class="headerlink" href="#external-hive-metastore" title="Permalink to this headline">¶</a></h2>
+<p>In a typical CDAS install, CDAS will start up and manage a Hive Metastore (HMS)
+compatible service. If instead, you’d like to have CDAS use an existing, externally
+managed HMS, you can do so. In this configuration, CDAS will simply read and write
+from the external HMS but all other behavior is unchanged.</p>
+<p>CDAS is compatible with Hive 1.1.x and 1.2.x (CDH5.7+).</p>
+<p>To use an external HMS, add this config to your DeploymentManager configs,
+typically <code class="docutils literal notranslate"><span class="pre">/etc/cerebro/env.sh</span></code>.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">CEREBRO_EXTERNAL_HMS_CONFIG</span><span class="o">=</span>&lt;path to hive-site.xml&gt;
+</pre></div>
+</div>
+<p>The value should be a full path to the hive-site.xml client config for the external HMS.
+The path must be accessible from the DeploymentManager process but can be either local
+or remote (e.g. S3). After setting the config and restarting the DeploymentManager, newly
+created clusters will use the external HMS and restarting existing clusters will update
+to use the external HMS config.</p>
+<p>It is possible to have multiple CDAS clusters use the same external HMS, subject to the
+concurrency settings of your HMS.</p>
+</div>
+<div class="section" id="advanced-networking">
+<span id="advanced-networking"></span><h2>Advanced Networking<a class="headerlink" href="#advanced-networking" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="configuring-the-ip-range-that-a-cdas-cluster-should-use-for-internal-routing">
+<span id="configuring-the-ip-range-that-a-cdas-cluster-should-use-for-internal-routing"></span><h3>Configuring the IP range that a CDAS cluster should use for internal routing<a class="headerlink" href="#configuring-the-ip-range-that-a-cdas-cluster-should-use-for-internal-routing" title="Permalink to this headline">¶</a></h3>
+<p>Each Cerebro cluster configures a private network for communication within the cluster.
+By default, Cerebro will use the 172.30.0.0/16 range for internal communication.
+The environment variable CEREBRO_CDAS_INTERNAL_NETWORK_IP_RANGE on the DM can be
+used to configure this setting.</p>
+<p>NOTE: AWS attaches an HTTP server to every instance at IP address 169.254.169.254.
+You should never configure an internal network range that would overlap with that
+IP address. If that occurs, then AWS libraries will not be able to query the HTTP
+server for the instance’s IAM credentials, precluding access to AWS resources.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Advanced installations</a><ul>
+<li><a class="reference internal" href="#external-hive-metastore">External Hive Metastore</a></li>
+<li><a class="reference internal" href="#advanced-networking">Advanced Networking</a><ul>
+<li><a class="reference internal" href="#configuring-the-ip-range-that-a-cdas-cluster-should-use-for-internal-routing">Configuring the IP range that a CDAS cluster should use for internal routing</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/AdvancedInstall.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">cerebro data pre-release  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, azzy.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+    </div>
+  </body>
+</html>

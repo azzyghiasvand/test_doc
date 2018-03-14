@@ -1,0 +1,296 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cerebro Data Access Service CDH Integration &#8212; Cerebro Data 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cerebro-data-access-service-cdh-integration">
+<span id="cerebro-data-access-service-cdh-integration"></span><h1>Cerebro Data Access Service CDH Integration<a class="headerlink" href="#cerebro-data-access-service-cdh-integration" title="Permalink to this headline">¶</a></h1>
+<p>This documents describes how to use Cerebro Data Access Service (CDAS) from a cluster
+admin perspective. It describes how to configure an existing CDH cluster to an existing
+Cerebro deployment.</p>
+<p>Prerequisites:</p>
+<ul class="simple">
+<li>CDAS running. We need the endpoints for the Cerebro Catalog components referred to as
+CDAS HMS and CDAS Sentry. We also need the Cerebro planner endpoint referred to as
+CDAS Planner.</li>
+<li>If kerberized, the principal for CDAS (referred to as CDAS Principal)</li>
+<li>CDH (5.7+) running and managed by Cloudera Manager (CM). This cluster should be fully
+functional with kerberos enabled (if desired) and Sentry enabled. This can included any
+subset of the CDH components.</li>
+</ul>
+<p>The result of these configuration changes will have CDH use the Cerebro Catalog,
+replacing the HiveMetastore and Sentry Store components. Note that even if these
+components are still running, when properly configured, they will not be used. No
+clients should be interacting with them.</p>
+<p>A summary of what we will do is:</p>
+<ol class="simple">
+<li>Configure HMS clients to talk to the Cerebro catalog. This includes other services
+such as Impala and HiveServer2 as well as gateway client configs for Spark, Pig, etc.</li>
+<li>Configure Sentry clients to talk to the Cerebro catalog. Clients typically do not
+contact this service directly, we will only need to update HiveServer2 and Impala.</li>
+<li>Configure the gateway client configs to use Cerebro’s data access service. This
+provides the functionality that the RecordService service provided.</li>
+</ol>
+<p>These steps are repeated across multiple CDH clusters allowing them to share the
+same metadata.</p>
+<div class="section" id="hms-configs">
+<span id="hms-configs"></span><h2>HMS Configs<a class="headerlink" href="#hms-configs" title="Permalink to this headline">¶</a></h2>
+<p>We need to make these configuration changes in multiple places for the different HMS
+clients. The configs are:</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span>&lt;property&gt;
+  &lt;name&gt;hive.metastore.uris&lt;/name&gt;
+  &lt;value&gt;thrift://&lt;CDAS HMS Host:Port&gt;&lt;/value&gt;
+&lt;/property&gt;
+&lt;property&gt;
+  &lt;name&gt;hive.metastore.kerberos.principal&lt;/name&gt;
+  &lt;value&gt;&lt;CDAS Principal&gt;&lt;/value&gt;
+&lt;/property&gt;
+</pre></div>
+</div>
+<p>If the cluster is not kerberized, then the kerberos principal is not necessary.</p>
+<div class="section" id="hive-service-configs">
+<span id="hive-service-configs"></span><h3>Hive service configs<a class="headerlink" href="#hive-service-configs" title="Permalink to this headline">¶</a></h3>
+<p>The configs need to be set in Hive -&gt; Service Wide -&gt; Hive Service Advanced Configuration
+Snippet (Safety Value) for <code class="docutils literal notranslate"><span class="pre">hive-site.xml</span></code></p>
+<p>This will require restarting the hive service. You can verify this is set properly by
+going on the machine (requires root) running HiveServer2 and looking in
+<code class="docutils literal notranslate"><span class="pre">/var/run/cloudera-scm-agent/process/&lt;latest</span> <span class="pre">folder</span> <span class="pre">for</span> <span class="pre">hive</span> <span class="pre">server2&gt;/hive-site.xml</span></code>.</p>
+<p>The CM generated config should make it very clear that these two values have been
+overridden.</p>
+<p><strong>Note</strong> This will result in the Hive Metastore Server as unhealthy. This is expected
+and can be safely ignored. <strong>HiveServer2</strong> health should be healthy.</p>
+</div>
+<div class="section" id="hive-client-configs">
+<span id="hive-client-configs"></span><h3>Hive client configs<a class="headerlink" href="#hive-client-configs" title="Permalink to this headline">¶</a></h3>
+<p>The configs need to be set in Hive -&gt; Gateway -&gt; Hive Client Advanced Configuration
+Snippet (Safety Value) for <code class="docutils literal notranslate"><span class="pre">hive-site.xml</span></code></p>
+<p>This will require deploying the client configs and restarting dependent services.
+You can verify this is set properly by going to any gateway machine and looking in
+<code class="docutils literal notranslate"><span class="pre">/etc/hive/conf/hive-site.xml</span></code>.</p>
+</div>
+<div class="section" id="impala-configs">
+<span id="impala-configs"></span><h3>Impala configs<a class="headerlink" href="#impala-configs" title="Permalink to this headline">¶</a></h3>
+<p>Impala will also need to be configured to the Cerebro catalog. This involves updating
+the above two configs in Impala -&gt; Impala Catalog Server -&gt; Catalog Server Hive Advanced
+Configuration Snippet (Safety Valve)</p>
+</div>
+</div>
+<div class="section" id="sentry-store-configs">
+<span id="sentry-store-configs"></span><h2>Sentry store configs<a class="headerlink" href="#sentry-store-configs" title="Permalink to this headline">¶</a></h2>
+<p>For Sentry use, we require that these configs are set. Again, the kerberos principal is
+only required for kerberized clusters.</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span>&lt;property&gt;
+  &lt;name&gt;sentry.service.client.server.rpc-address&lt;/name&gt;
+  &lt;value&gt;&lt;CDAS Sentry Host&gt;&lt;/value&gt;
+&lt;/property&gt;
+&lt;property&gt;
+  &lt;name&gt;sentry.service.client.server.rpc-port&lt;/name&gt;
+  &lt;value&gt;&lt;CDAS Sentry Port&gt;&lt;/value&gt;
+&lt;/property&gt;
+&lt;property&gt;
+  &lt;name&gt;sentry.service.principal&lt;/name&gt;
+  &lt;value&gt;&lt;CDAS Principal&gt;&lt;/value&gt;
+&lt;/property&gt;
+</pre></div>
+</div>
+<div class="section" id="hive-server-2">
+<span id="hive-server-2"></span><h3>Hive Server 2<a class="headerlink" href="#hive-server-2" title="Permalink to this headline">¶</a></h3>
+<p>This will need to be set in: Hive -&gt; Service Wide -&gt; Hive Service Advanced Configuration
+Snippet (Safety Valve) for <code class="docutils literal notranslate"><span class="pre">sentry-site.xml</span></code></p>
+<p>This will require restarting the dependent services. These can be verified by looking in
+the generated config for the HiveServer2 service (see above for the HMS config on
+details).</p>
+</div>
+<div class="section" id="impala">
+<span id="impala"></span><h3>Impala<a class="headerlink" href="#impala" title="Permalink to this headline">¶</a></h3>
+<p>This will need to be set in: Impala -&gt; Service Wide -&gt; Impala Service Advanced
+Configuration Snippet (Safety Valve) for <code class="docutils literal notranslate"><span class="pre">sentry-site.xml</span></code></p>
+<p>This will require restarting Impala.</p>
+<p><strong>NOTE</strong>: For Impala integration, the Impala principal’s primary (typically ‘impala’)
+must also be in the list of Cerebro catalog admins (env: CEREBRO_CATALOG_ADMINS).</p>
+</div>
+</div>
+<div class="section" id="recordservice-configs">
+<span id="recordservice-configs"></span><h2>RecordService Configs<a class="headerlink" href="#recordservice-configs" title="Permalink to this headline">¶</a></h2>
+<p>RecordService configs can be set in either mapred-site.xml or yarn-site.xml depending on
+which one you are using. The configuration is:</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span>&lt;property&gt;
+  &lt;name&gt;recordservice.planner.hostports&lt;/name&gt;
+  &lt;value&gt;&lt;CDAS Planner Host:Port&gt;&lt;/value&gt;
+&lt;/property&gt;
+</pre></div>
+</div>
+<p>This has to be set in the safety valves in Yarn -&gt; Gateway -&gt; MapReduce Client Advanced
+Configuration Snippet (Safety Valve) for <code class="docutils literal notranslate"><span class="pre">mapred-site.xml</span></code> and Yarn -&gt; Gateway -&gt; YARN
+Client Advanced Configuration Snippet (Safety Valve) for <code class="docutils literal notranslate"><span class="pre">yarn-site.xml</span></code></p>
+<p>This requires redeploying the client configs. You can verify it is set by going on any
+gateway machine and looking in <code class="docutils literal notranslate"><span class="pre">/etc/hadoop/conf/[mapred|yarn]-site.xml</span></code>.</p>
+</div>
+<div class="section" id="client-jars">
+<span id="client-jars"></span><h2>Client jars<a class="headerlink" href="#client-jars" title="Permalink to this headline">¶</a></h2>
+<p>Cerebro publishes jars that are API compatible with the RecordService jars.</p>
+<div class="section" id="pom-configuration">
+<span id="pom-configuration"></span><h3>POM configuration<a class="headerlink" href="#pom-configuration" title="Permalink to this headline">¶</a></h3>
+<p>To use these jars from maven, you can configure the pom to use our repo and version.
+This can be added to the pom.</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span>  <span class="nt">&lt;properties&gt;</span>
+    <span class="nt">&lt;recordservice.version&gt;</span>1.0.0-beta-9<span class="nt">&lt;/recordservice.version&gt;</span>
+  <span class="nt">&lt;/properties&gt;</span>
+
+  <span class="c">&lt;!-- For MapReduce --&gt;</span>
+  <span class="nt">&lt;dependencies&gt;</span>
+    <span class="nt">&lt;dependency&gt;</span>
+      <span class="nt">&lt;groupId&gt;</span>com.cloudera.recordservice<span class="nt">&lt;/groupId&gt;</span>
+      <span class="nt">&lt;artifactId&gt;</span>recordservice-mr<span class="nt">&lt;/artifactId&gt;</span>
+      <span class="nt">&lt;version&gt;</span>${recordservice.version}<span class="nt">&lt;/version&gt;</span>
+    <span class="nt">&lt;/dependency&gt;</span>
+  <span class="nt">&lt;/dependencies&gt;</span>
+
+  <span class="c">&lt;!-- For Spark 1.6 --&gt;</span>
+  <span class="nt">&lt;dependencies&gt;</span>
+    <span class="nt">&lt;dependency&gt;</span>
+      <span class="nt">&lt;groupId&gt;</span>com.cloudera.recordservice<span class="nt">&lt;/groupId&gt;</span>
+      <span class="nt">&lt;artifactId&gt;</span>recordservice-spark<span class="nt">&lt;/artifactId&gt;</span>
+      <span class="nt">&lt;version&gt;</span>${recordservice.version}<span class="nt">&lt;/version&gt;</span>
+    <span class="nt">&lt;/dependency&gt;</span>
+  <span class="nt">&lt;/dependencies&gt;</span>
+
+  <span class="c">&lt;!-- For Spark 2.0 --&gt;</span>
+  <span class="nt">&lt;dependencies&gt;</span>
+    <span class="nt">&lt;dependency&gt;</span>
+      <span class="nt">&lt;groupId&gt;</span>com.cloudera.recordservice<span class="nt">&lt;/groupId&gt;</span>
+      <span class="nt">&lt;artifactId&gt;</span>recordservice-spark-2.0<span class="nt">&lt;/artifactId&gt;</span>
+      <span class="nt">&lt;version&gt;</span>${recordservice.version}<span class="nt">&lt;/version&gt;</span>
+    <span class="nt">&lt;/dependency&gt;</span>
+  <span class="nt">&lt;/dependencies&gt;</span>
+
+  <span class="nt">&lt;repositories&gt;</span>
+    <span class="nt">&lt;repository&gt;</span>
+      <span class="nt">&lt;id&gt;</span>cerebro.releases.repo<span class="nt">&lt;/id&gt;</span>
+      <span class="nt">&lt;name&gt;</span>libs-release<span class="nt">&lt;/name&gt;</span>
+      <span class="nt">&lt;url&gt;</span>https://cerebro.jfrog.io/cerebro/libs-release<span class="nt">&lt;/url&gt;</span>
+    <span class="nt">&lt;/repository&gt;</span>
+    <span class="nt">&lt;repository&gt;</span>
+      <span class="nt">&lt;id&gt;</span>cerebro.snapshots.repo<span class="nt">&lt;/id&gt;</span>
+      <span class="nt">&lt;name&gt;</span>libs-snapshot<span class="nt">&lt;/name&gt;</span>
+      <span class="nt">&lt;url&gt;</span>https://cerebro.jfrog.io/cerebro/libs-snapshot<span class="nt">&lt;/url&gt;</span>
+    <span class="nt">&lt;/repository&gt;</span>
+  <span class="nt">&lt;/repositories&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="downloading-the-jars">
+<span id="downloading-the-jars"></span><h2>Downloading the jars<a class="headerlink" href="#downloading-the-jars" title="Permalink to this headline">¶</a></h2>
+<p>All of the release jars are also available in S3 in the release location. They are
+available at</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>s3://cerebrodata-release-useast/&lt;version&gt;/client
+<span class="c1"># For example:</span>
+s3://cerebrodata-release-useast/0.7.1/client
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Cerebro Data Access Service CDH Integration</a><ul>
+<li><a class="reference internal" href="#hms-configs">HMS Configs</a><ul>
+<li><a class="reference internal" href="#hive-service-configs">Hive service configs</a></li>
+<li><a class="reference internal" href="#hive-client-configs">Hive client configs</a></li>
+<li><a class="reference internal" href="#impala-configs">Impala configs</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sentry-store-configs">Sentry store configs</a><ul>
+<li><a class="reference internal" href="#hive-server-2">Hive Server 2</a></li>
+<li><a class="reference internal" href="#impala">Impala</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#recordservice-configs">RecordService Configs</a></li>
+<li><a class="reference internal" href="#client-jars">Client jars</a><ul>
+<li><a class="reference internal" href="#pom-configuration">POM configuration</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#downloading-the-jars">Downloading the jars</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/CDHIntegration.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, azzy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/CDHIntegration.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
